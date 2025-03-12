@@ -353,22 +353,22 @@ if st.button("Generar Documento"):
         doc.save(word_io)
         word_io.seek(0)
         
-        # Se requiere guardar en disco para convertir a PDF
-        temp_folder = os.getcwd()
-        temp_doc_path = os.path.join(temp_folder, doc_filename)
-        doc.save(temp_doc_path)
-        try:
-            from docx2pdf import convert
-            temp_pdf_path = os.path.join(temp_folder, pdf_filename)
-            convert(temp_doc_path, temp_pdf_path)
-            with open(temp_pdf_path, "rb") as pdf_file:
-                pdf_bytes = pdf_file.read()         
-            pdf_io = BytesIO(pdf_bytes)
-            pdf_io.seek(0)
-            progress_bar.progress(100)
-        except Exception as e:
-            st.error(f"Error al convertir a PDF: {e}")
-            pdf_io = None
+        # Utilizar un directorio temporal para guardar y convertir archivos
+        with tempfile.TemporaryDirectory() as temp_folder:
+            temp_doc_path = os.path.join(temp_folder, doc_filename)
+            doc.save(temp_doc_path)
+            try:
+                from docx2pdf import convert
+                temp_pdf_path = os.path.join(temp_folder, pdf_filename)
+                convert(temp_doc_path, temp_pdf_path)
+                with open(temp_pdf_path, "rb") as pdf_file:
+                    pdf_bytes = pdf_file.read()         
+                pdf_io = BytesIO(pdf_bytes)
+                pdf_io.seek(0)
+                progress_bar.progress(100)
+            except Exception as e:
+                st.error(f"Error al convertir a PDF: {e}")
+                pdf_io = None
 
         # Preparar el contenido del archivo Excel original
         excel_file.seek(0)
@@ -381,14 +381,8 @@ if st.button("Generar Documento"):
             zip_file.writestr(doc_filename, word_io.getvalue())
             if pdf_io is not None:
                 zip_file.writestr(pdf_filename, pdf_io.getvalue())
-                zip_file.writestr(excel_file.name, excel_bytes)
+            zip_file.writestr(excel_file.name, excel_bytes)
         zip_io.seek(0)
-
-        # Borrar archivos temporales creados en disco
-        if os.path.exists(temp_doc_path):
-            os.remove(temp_doc_path)
-        if 'temp_pdf_path' in locals() and os.path.exists(temp_pdf_path):
-            os.remove(temp_pdf_path)
 
         st.download_button(
             "Descargar ZIP con todos los archivos",
