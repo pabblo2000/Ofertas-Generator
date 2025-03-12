@@ -4,29 +4,42 @@ import time
 import os
 from io import BytesIO
 from docx import Document
-import config  # Importa la configuración (correo_proveedor, output_folder y default_template)
+import config  # Configuración: correo_proveedor, output_folder, default_template
 
-# Mostrar el logo en la parte superior (ajusta el ancho según necesites)
-logo_path = r"C:\Users\palvaroh\Desktop\Ofertas Generator\minsait.jpg"
-if os.path.exists(logo_path):
-    st.image(logo_path, width=150)
-else:
-    st.warning("No se encontró el logo en la ruta especificada.")
+# --- Sidebar (menú lateral) ---
+with st.sidebar:
+    # Logo clicable que redirige a minsait.com  
+    logo_path = "https://pbs.twimg.com/profile_images/1859630278114684929/7BumEThB_200x200.jpg"
+    if os.path.exists(logo_path):
+        # Usamos HTML para crear un enlace con la imagen
+        import base64
+        with open(logo_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode()
+        st.markdown(f'<a href="https://minsait.com" target="_blank" ><img src="data:image/jpeg;base64,{encoded_string}" width="150"></a>', unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: left; color: #FF5733;'>Generador de Ofertas</h1>", unsafe_allow_html=True)
+    else:
+        st.warning("No se encontró el logo en la ruta especificada.")
+    
+    st.markdown("---")
+    
+    # Configuración en expander
+    with st.expander("Configuración"):
+        new_proveedor = st.text_input("Correo Proveedor Configuración", value=config.correo_proveedor)
+        new_output_folder = st.text_input("Ruta de Salida", value=config.output_folder)
+        new_default_template = st.text_input("Plantilla por Defecto", value=config.default_template)
+        if st.button("Guardar Configuración"):
+            with open("config.py", "w") as f:
+                f.write(f'correo_proveedor = "{new_proveedor}"\n')
+                f.write(f'output_folder = r"{new_output_folder}"\n')
+                f.write(f'default_template = r"{new_default_template}"\n')
+            st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
 
-# --- Configuración en la barra lateral ---
-with st.sidebar.expander("Configuración"):
-    new_proveedor = st.text_input("Correo Proveedor Configuración", value=config.correo_proveedor)
-    new_output_folder = st.text_input("Ruta de Salida", value=config.output_folder)
-    new_default_template = st.text_input("Plantilla por Defecto", value=config.default_template)
-    if st.button("Guardar Configuración"):
-        with open("config.py", "w") as f:
-            f.write(f'correo_proveedor = "{new_proveedor}"\n')
-            f.write(f'output_folder = r"{new_output_folder}"\n')
-            f.write(f'default_template = r"{new_default_template}"\n')
-        st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
+    st.markdown("---")
+    st.markdown("**Version:** 1.00")
+    st.markdown("**Autor:** Pablo Álvaro")
 
 # --- Carga de archivos ---
-st.title("Generador de Documentos a partir de Excel y Plantilla Word")
+# st.title("Generador de Documentos a partir de Excel y Plantilla Word")
 col1, col2 = st.columns(2)
 with col1:
     excel_file = st.file_uploader("Selecciona el archivo Excel (.xlsx)", type=["xlsx"])
@@ -89,7 +102,6 @@ if "n_posts" not in st.session_state:
 # =============================================================================
 with st.container():
     st.subheader("Datos Generales")
-    # Formulario para datos generales
     with st.form("form_datos_generales", clear_on_submit=False):
         oferta_referencia = st.text_input("Oferta de Referencia", value=data["oferta_referencia"])
         nombre_proyecto = st.text_input("Nombre del Proyecto", value=data["nombre_proyecto"])
@@ -107,11 +119,9 @@ with st.container():
 # =============================================================================
 with st.container():
     st.subheader("Posts")
-    # Botón para agregar post, colocado justo encima de la sección de posts
     if st.button("Agregar Post", key="agregar_post") and st.session_state.n_posts < 5:
         st.session_state.n_posts += 1
 
-    # Formulario para edición de posts y totales
     with st.form("form_posts", clear_on_submit=False):
         st.markdown("### Edición de Posts")
         posts = []
@@ -144,7 +154,6 @@ with st.container():
 # SECCIÓN FINAL: GENERAR DOCUMENTO
 # =============================================================================
 if st.button("Generar Documento"):
-    # Recoger los datos de ambas secciones
     updated = {
         "oferta_referencia": oferta_referencia,
         "nombre_proyecto": nombre_proyecto,
@@ -179,9 +188,9 @@ if st.button("Generar Documento"):
     st.subheader("Totales")
     st.table(totales_df)
     
-    # --- Generación del documento Word y conversión a PDF ---
+    # --- Generación del documento Word y conversión a PDF con barra de progreso ---
     progress_bar = st.progress(0)
-    # Seleccionar plantilla: si no se subió ninguna, se usa la por defecto
+    # Seleccionar plantilla: si no se carga, se usa la por defecto
     if template_file is None:
         st.info(f"No se cargó plantilla; se usará la plantilla por defecto:\n{config.default_template}")
         doc = Document(config.default_template)
@@ -238,12 +247,54 @@ if st.button("Generar Documento"):
                         cell.text = cell.text.replace(ph_postc, post["costo"])
     progress_bar.progress(80)
     
-    # Guardar documento Word y convertirlo a PDF en la carpeta configurada
+    # --- Borrar filas vacías de la tabla de perfiles POST y formatear ---
+    try:
+        table = doc.tables[1]
+        
+        # Poner en negrita las últimas dos filas
+        for row in table.rows[-2:]:
+            for cell in row.cells:
+                if cell.paragraphs and len(cell.paragraphs[0].runs) > 0:
+                    cell.paragraphs[0].runs[0].bold = True
+
+        # Borrar las filas que no estén rellenadas
+        rows_to_delete = []
+        for i, row in enumerate(table.rows):
+            cell_text = row.cells[0].text.strip()
+            # Se borra si es "-" o si parece un placeholder (ej: <<post1>>)
+            if cell_text == "-" or (cell_text.startswith("<<") and cell_text.endswith(">>")):
+                rows_to_delete.append(i)
+        
+        for i in sorted(rows_to_delete, reverse=True):
+            row = table.rows[i]
+            row._element.getparent().remove(row._element)
+    except Exception as e:
+        st.error(f"Error al procesar la tabla de posts: {e}")
+
+    
+    # --- Formateo extra en el documento Word ---
+    try:
+        # Ponemos la oferta de referencia en negrita (asumiendo que es el párrafo 1)
+        doc.paragraphs[1].runs[0].bold = True
+        
+        # Subrayar únicamente las primeras 19 letras del párrafo 5
+        para = doc.paragraphs[5]
+        text = para.runs[0].text
+        para.runs[0].text = ""
+        run1 = para.add_run(text[:19])
+        run1.underline = True
+        run2 = para.add_run(text[19:])
+        run2.underline = False
+    except Exception as e:
+        st.error(f"Error en formateo extra del documento: {e}")
+    progress_bar.progress(90)
+    
+    # Guardar el documento Word y convertirlo a PDF en la carpeta configurada
     doc_filename = f"{updated['oferta_referencia']}_generado.docx"
     pdf_filename = f"{updated['oferta_referencia']}_generado.pdf"
     doc_path = os.path.join(config.output_folder, doc_filename)
     doc.save(doc_path)
-    progress_bar.progress(90)
+    progress_bar.progress(95)
     try:
         from docx2pdf import convert
         pdf_path = os.path.join(config.output_folder, pdf_filename)
@@ -251,4 +302,4 @@ if st.button("Generar Documento"):
         progress_bar.progress(100)
         st.success(f"Documentos generados correctamente en:\n{config.output_folder}")
     except Exception as e:
-        st.error(f"El documento Word se generó correctamente en {config.output_folder}, pero hubo un error al convertir a PDF: {e}")
+        st.error(f"El documento Word se generó en {config.output_folder}, pero hubo un error al convertir a PDF: {e}")
