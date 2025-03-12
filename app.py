@@ -18,6 +18,11 @@ except:
         f.write('output_folder = r""\n')
     st.error("Se ha creado un archivo de configuración por defecto. Por favor, reinicia la app.")
 
+st.set_page_config(
+    page_title="Creador de Ofertas",
+    page_icon="📄"
+)
+
 # --- Sidebar (menú lateral) ---
 with st.sidebar:
     # Logo clicable que redirige a minsait.com  

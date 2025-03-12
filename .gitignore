@@ -6,3 +6,6 @@
 *.ipynb
 how_to_run
 __pycache__
+dist/
+build/
+*.spec
