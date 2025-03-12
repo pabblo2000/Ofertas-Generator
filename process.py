@@ -10,15 +10,15 @@ import config  # Configuración: correo_proveedor, output_folder, default_templa
 with st.sidebar:
     # Logo clicable que redirige a minsait.com  
     logo_path = "https://pbs.twimg.com/profile_images/1859630278114684929/7BumEThB_200x200.jpg"
-    if os.path.exists(logo_path):
-        # Usamos HTML para crear un enlace con la imagen
-        import base64
-        with open(logo_path, "rb") as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode()
+    try:
+        import requests, base64
+        response = requests.get(logo_path)
+        response.raise_for_status()
+        encoded_string = base64.b64encode(response.content).decode()
         st.markdown(f'<a href="https://minsait.com" target="_blank" ><img src="data:image/jpeg;base64,{encoded_string}" width="150"></a>', unsafe_allow_html=True)
         st.markdown("<h1 style='text-align: left; color: #FF5733;'>Generador de Ofertas</h1>", unsafe_allow_html=True)
-    else:
-        st.warning("No se encontró el logo en la ruta especificada.")
+    except Exception as e:
+        st.warning("No se pudo cargar el logo desde la URL.")
     
     st.markdown("---")
     
@@ -39,7 +39,6 @@ with st.sidebar:
     st.markdown("**Autor:** Pablo Álvaro")
 
 # --- Carga de archivos ---
-# st.title("Generador de Documentos a partir de Excel y Plantilla Word")
 col1, col2 = st.columns(2)
 with col1:
     excel_file = st.file_uploader("Selecciona el archivo Excel (.xlsx)", type=["xlsx"])
@@ -109,6 +108,7 @@ with st.container():
         fecha_fin = st.text_input("Fecha de Fin", value=data["fecha_fin"])
         correo_cliente = st.text_input("Correo Cliente", value=data["correo_cliente"])
         correo_proveedor = st.text_input("Correo Proveedor", value=data["correo_proveedor"])
+        today = st.text_input("Today", value=data["today"])
         descripcion = st.text_area("Descripción", value=data["descripcion"])
         submitted_dg = st.form_submit_button("Guardar Datos Generales")
     if submitted_dg:
@@ -130,7 +130,8 @@ with st.container():
                 default_post = data["posts"][i]
             else:
                 default_post = {"post": "", "horas": "", "costo": ""}
-            col1, col2, col3 = st.columns(3)
+            # Ajustamos el ancho: 2 para Post, 1 para Horas y 1 para Costo
+            col1, col2, col3 = st.columns([2, 1, 1])
             with col1:
                 post_val = st.text_input(f"Post {i+1}", value=default_post["post"], key=f"post_{i}")
             with col2:
@@ -162,7 +163,7 @@ if st.button("Generar Documento"):
         "correo_cliente": correo_cliente,
         "correo_proveedor": correo_proveedor,
         "descripcion": descripcion,
-        "today": data["today"],
+        "today": today,
         "posts": posts,
         "totalh": totalh,
         "totalsiva": totalsiva,
@@ -171,8 +172,8 @@ if st.button("Generar Documento"):
     
     st.subheader("Datos Actualizados")
     df_generales = pd.DataFrame({
-        "Campo": ["Oferta de Referencia", "Nombre del Proyecto", "Fecha de Inicio", "Fecha de Fin", "Correo Cliente", "Correo Proveedor", "Descripción"],
-        "Valor": [updated["oferta_referencia"], updated["nombre_proyecto"], updated["fecha_inicio"], updated["fecha_fin"], updated["correo_cliente"], updated["correo_proveedor"], updated["descripcion"]]
+        "Campo": ["Oferta de Referencia", "Nombre del Proyecto", "Fecha de Inicio", "Fecha de Fin", "Correo Cliente", "Correo Proveedor", "Descripción", "Today"],
+        "Valor": [updated["oferta_referencia"], updated["nombre_proyecto"], updated["fecha_inicio"], updated["fecha_fin"], updated["correo_cliente"], updated["correo_proveedor"], updated["descripcion"], updated["today"]]
     })
     st.table(df_generales)
     
@@ -270,7 +271,6 @@ if st.button("Generar Documento"):
             row._element.getparent().remove(row._element)
     except Exception as e:
         st.error(f"Error al procesar la tabla de posts: {e}")
-
     
     # --- Formateo extra en el documento Word ---
     try:
