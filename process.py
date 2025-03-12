@@ -4,16 +4,18 @@ import time
 import os
 from io import BytesIO
 from docx import Document
-import config  # Importa la configuración (correo_proveedor y output_folder)
+import config  # Importa la configuración (correo_proveedor, output_folder y default_template)
 
 # --- Configuración en la barra lateral ---
 with st.sidebar.expander("Configuración"):
     new_proveedor = st.text_input("Correo Proveedor Configuración", value=config.correo_proveedor)
     new_output_folder = st.text_input("Ruta de Salida", value=config.output_folder)
+    new_default_template = st.text_input("Plantilla por Defecto", value=config.default_template)
     if st.button("Guardar Configuración"):
         with open("config.py", "w") as f:
             f.write(f'correo_proveedor = "{new_proveedor}"\n')
             f.write(f'output_folder = r"{new_output_folder}"\n')
+            f.write(f'default_template = r"{new_default_template}"\n')
         st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
 
 # --- Carga de archivos ---
@@ -80,7 +82,7 @@ if "n_posts" not in st.session_state:
 # =============================================================================
 with st.container():
     st.subheader("Datos Generales")
-    # Usamos un formulario para agrupar la edición de los datos generales
+    # Formulario para datos generales
     with st.form("form_datos_generales", clear_on_submit=False):
         oferta_referencia = st.text_input("Oferta de Referencia", value=data["oferta_referencia"])
         nombre_proyecto = st.text_input("Nombre del Proyecto", value=data["nombre_proyecto"])
@@ -98,11 +100,11 @@ with st.container():
 # =============================================================================
 with st.container():
     st.subheader("Posts")
-    # Botón para agregar post, colocado justo arriba de la edición de posts
+    # Botón para agregar post, colocado justo arriba de la sección de posts
     if st.button("Agregar Post", key="agregar_post") and st.session_state.n_posts < 5:
         st.session_state.n_posts += 1
 
-    # Mostramos la edición de posts y totales en un formulario
+    # Formulario para edición de posts y totales
     with st.form("form_posts", clear_on_submit=False):
         st.markdown("### Edición de Posts")
         posts = []
@@ -134,9 +136,8 @@ with st.container():
 # =============================================================================
 # SECCIÓN FINAL: GENERAR DOCUMENTO
 # =============================================================================
-# Botón para generar el documento que recoge los datos de ambas secciones
 if st.button("Generar Documento"):
-    # Se recogen los datos de las secciones (nota: si se reinicia la app, se recogen los valores actuales)
+    # Se recogen los datos de ambas secciones
     updated = {
         "oferta_referencia": oferta_referencia,
         "nombre_proyecto": nombre_proyecto,
@@ -172,66 +173,69 @@ if st.button("Generar Documento"):
     st.table(totales_df)
     
     # --- Generación del documento Word y conversión a PDF ---
+    # Si no se ha cargado una plantilla, se usa la plantilla por defecto de la configuración
     if template_file is None:
-        st.error("Por favor, selecciona la plantilla Word.")
+        st.info(f"No se cargó plantilla; se usará la plantilla por defecto:\n{config.default_template}")
+        doc = Document(config.default_template)
     else:
         template_file.seek(0)
         doc = Document(template_file)
-        # Reemplazo de placeholders en datos generales y totales
-        placeholders = {
-            "<<oferta_referencia>>": updated["oferta_referencia"],
-            "<<nombre_proyecto>>": updated["nombre_proyecto"],
-            "<<fecha_inicio>>": updated["fecha_inicio"],
-            "<<fecha_fin>>": updated["fecha_fin"],
-            "<<correo_cliente>>": updated["correo_cliente"],
-            "<<correo_proveedor>>": updated["correo_proveedor"],
-            "<<descripcion>>": updated["descripcion"],
-            "<<totalh>>": updated["totalh"],
-            "<<totalsiva>>": updated["totalsiva"],
-            "<<totalciva>>": updated["totalciva"],
-            "<<today>>": updated["today"]
-        }
-        for ph, val in placeholders.items():
-            for p in doc.paragraphs:
-                if ph in p.text:
-                    p.text = p.text.replace(ph, str(val))
-            for table in doc.tables:
-                for row in table.rows:
-                    for cell in row.cells:
-                        if ph in cell.text:
-                            cell.text = cell.text.replace(ph, str(val))
-                            
-        # Reemplazo de placeholders para cada post (<<post1>>, <<posth1>>, <<postc1>>, etc.)
-        for i, post in enumerate(updated["posts"], start=1):
-            ph_post = f"<<post{i}>>"
-            ph_posth = f"<<posth{i}>>"
-            ph_postc = f"<<postc{i}>>"
-            for p in doc.paragraphs:
-                if ph_post in p.text:
-                    p.text = p.text.replace(ph_post, post["post"])
-                if ph_posth in p.text:
-                    p.text = p.text.replace(ph_posth, post["horas"])
-                if ph_postc in p.text:
-                    p.text = p.text.replace(ph_postc, post["costo"])
-            for table in doc.tables:
-                for row in table.rows:
-                    for cell in row.cells:
-                        if ph_post in cell.text:
-                            cell.text = cell.text.replace(ph_post, post["post"])
-                        if ph_posth in cell.text:
-                            cell.text = cell.text.replace(ph_posth, post["horas"])
-                        if ph_postc in cell.text:
-                            cell.text = cell.text.replace(ph_postc, post["costo"])
         
-        # Guardar el documento Word y convertirlo a PDF en la carpeta indicada en config.py
-        doc_filename = f"{updated['oferta_referencia']}_generado.docx"
-        pdf_filename = f"{updated['oferta_referencia']}_generado.pdf"
-        doc_path = os.path.join(config.output_folder, doc_filename)
-        doc.save(doc_path)
-        try:
-            from docx2pdf import convert
-            pdf_path = os.path.join(config.output_folder, pdf_filename)
-            convert(doc_path, pdf_path)
-            st.success(f"Documentos generados correctamente en:\n{config.output_folder}")
-        except Exception as e:
-            st.error(f"El documento Word se generó correctamente en {config.output_folder}, pero hubo un error al convertir a PDF: {e}")
+    # Reemplazo de placeholders en datos generales y totales
+    placeholders = {
+        "<<oferta_referencia>>": updated["oferta_referencia"],
+        "<<nombre_proyecto>>": updated["nombre_proyecto"],
+        "<<fecha_inicio>>": updated["fecha_inicio"],
+        "<<fecha_fin>>": updated["fecha_fin"],
+        "<<correo_cliente>>": updated["correo_cliente"],
+        "<<correo_proveedor>>": updated["correo_proveedor"],
+        "<<descripcion>>": updated["descripcion"],
+        "<<totalh>>": updated["totalh"],
+        "<<totalsiva>>": updated["totalsiva"],
+        "<<totalciva>>": updated["totalciva"],
+        "<<today>>": updated["today"]
+    }
+    for ph, val in placeholders.items():
+        for p in doc.paragraphs:
+            if ph in p.text:
+                p.text = p.text.replace(ph, str(val))
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    if ph in cell.text:
+                        cell.text = cell.text.replace(ph, str(val))
+    
+    # Reemplazo de placeholders para cada post (<<post1>>, <<posth1>>, <<postc1>>, etc.)
+    for i, post in enumerate(updated["posts"], start=1):
+        ph_post = f"<<post{i}>>"
+        ph_posth = f"<<posth{i}>>"
+        ph_postc = f"<<postc{i}>>"
+        for p in doc.paragraphs:
+            if ph_post in p.text:
+                p.text = p.text.replace(ph_post, post["post"])
+            if ph_posth in p.text:
+                p.text = p.text.replace(ph_posth, post["horas"])
+            if ph_postc in p.text:
+                p.text = p.text.replace(ph_postc, post["costo"])
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    if ph_post in cell.text:
+                        cell.text = cell.text.replace(ph_post, post["post"])
+                    if ph_posth in cell.text:
+                        cell.text = cell.text.replace(ph_posth, post["horas"])
+                    if ph_postc in cell.text:
+                        cell.text = cell.text.replace(ph_postc, post["costo"])
+    
+    # Guardar el documento Word y convertirlo a PDF en la carpeta configurada
+    doc_filename = f"{updated['oferta_referencia']}_generado.docx"
+    pdf_filename = f"{updated['oferta_referencia']}_generado.pdf"
+    doc_path = os.path.join(config.output_folder, doc_filename)
+    doc.save(doc_path)
+    try:
+        from docx2pdf import convert
+        pdf_path = os.path.join(config.output_folder, pdf_filename)
+        convert(doc_path, pdf_path)
+        st.success(f"Documentos generados correctamente en:\n{config.output_folder}")
+    except Exception as e:
+        st.error(f"El documento Word se generó correctamente en {config.output_folder}, pero hubo un error al convertir a PDF: {e}")
