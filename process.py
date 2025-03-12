@@ -6,6 +6,13 @@ from io import BytesIO
 from docx import Document
 import config  # Importa la configuración (correo_proveedor, output_folder y default_template)
 
+# Mostrar el logo en la parte superior (ajusta el ancho según necesites)
+logo_path = r"C:\Users\palvaroh\Desktop\Ofertas Generator\minsait.jpg"
+if os.path.exists(logo_path):
+    st.image(logo_path, width=150)
+else:
+    st.warning("No se encontró el logo en la ruta especificada.")
+
 # --- Configuración en la barra lateral ---
 with st.sidebar.expander("Configuración"):
     new_proveedor = st.text_input("Correo Proveedor Configuración", value=config.correo_proveedor)
@@ -100,7 +107,7 @@ with st.container():
 # =============================================================================
 with st.container():
     st.subheader("Posts")
-    # Botón para agregar post, colocado justo arriba de la sección de posts
+    # Botón para agregar post, colocado justo encima de la sección de posts
     if st.button("Agregar Post", key="agregar_post") and st.session_state.n_posts < 5:
         st.session_state.n_posts += 1
 
@@ -137,7 +144,7 @@ with st.container():
 # SECCIÓN FINAL: GENERAR DOCUMENTO
 # =============================================================================
 if st.button("Generar Documento"):
-    # Se recogen los datos de ambas secciones
+    # Recoger los datos de ambas secciones
     updated = {
         "oferta_referencia": oferta_referencia,
         "nombre_proyecto": nombre_proyecto,
@@ -173,14 +180,16 @@ if st.button("Generar Documento"):
     st.table(totales_df)
     
     # --- Generación del documento Word y conversión a PDF ---
-    # Si no se ha cargado una plantilla, se usa la plantilla por defecto de la configuración
+    progress_bar = st.progress(0)
+    # Seleccionar plantilla: si no se subió ninguna, se usa la por defecto
     if template_file is None:
         st.info(f"No se cargó plantilla; se usará la plantilla por defecto:\n{config.default_template}")
         doc = Document(config.default_template)
     else:
         template_file.seek(0)
         doc = Document(template_file)
-        
+    progress_bar.progress(20)
+    
     # Reemplazo de placeholders en datos generales y totales
     placeholders = {
         "<<oferta_referencia>>": updated["oferta_referencia"],
@@ -204,6 +213,7 @@ if st.button("Generar Documento"):
                 for cell in row.cells:
                     if ph in cell.text:
                         cell.text = cell.text.replace(ph, str(val))
+    progress_bar.progress(50)
     
     # Reemplazo de placeholders para cada post (<<post1>>, <<posth1>>, <<postc1>>, etc.)
     for i, post in enumerate(updated["posts"], start=1):
@@ -226,16 +236,19 @@ if st.button("Generar Documento"):
                         cell.text = cell.text.replace(ph_posth, post["horas"])
                     if ph_postc in cell.text:
                         cell.text = cell.text.replace(ph_postc, post["costo"])
+    progress_bar.progress(80)
     
-    # Guardar el documento Word y convertirlo a PDF en la carpeta configurada
+    # Guardar documento Word y convertirlo a PDF en la carpeta configurada
     doc_filename = f"{updated['oferta_referencia']}_generado.docx"
     pdf_filename = f"{updated['oferta_referencia']}_generado.pdf"
     doc_path = os.path.join(config.output_folder, doc_filename)
     doc.save(doc_path)
+    progress_bar.progress(90)
     try:
         from docx2pdf import convert
         pdf_path = os.path.join(config.output_folder, pdf_filename)
         convert(doc_path, pdf_path)
+        progress_bar.progress(100)
         st.success(f"Documentos generados correctamente en:\n{config.output_folder}")
     except Exception as e:
         st.error(f"El documento Word se generó correctamente en {config.output_folder}, pero hubo un error al convertir a PDF: {e}")
