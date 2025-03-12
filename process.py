@@ -5,7 +5,17 @@ import os
 from io import BytesIO
 from docx import Document
 import tempfile
-import config  # Configuración: correo_proveedor, modo_guardado, default_template
+try:
+    import config  # Configuración: correo_proveedor, modo_guardado, default_template
+except:
+    st.error("No se pudo cargar el archivo de configuración.")
+    # Creamos un archivo de configuración por defecto
+    with open("config.py", "w", encoding="utf-8") as f:
+        f.write('correo_proveedor = ""\n')
+        f.write('modo_guardado = "Mediante descarga"\n')
+        f.write('default_template = r""\n')
+        f.write('output_folder = r""\n')
+    st.error("Se ha creado un archivo de configuración por defecto. Por favor, reinicia la app.")
 
 # --- Sidebar (menú lateral) ---
 with st.sidebar:
