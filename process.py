@@ -35,8 +35,8 @@ with st.sidebar:
             st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
 
     st.markdown("---")
-    st.markdown("**Version:** 1.00")
-    st.markdown("**Autor:** Pablo Álvaro")
+    st.markdown("**Version:** 1.0.1")
+    st.markdown("**Autor:** Pablo Álvaro Hidalgo")
 
 # --- Carga de archivos ---
 col1, col2 = st.columns(2)
@@ -290,8 +290,8 @@ if st.button("Generar Documento"):
     progress_bar.progress(90)
     
     # Guardar el documento Word y convertirlo a PDF en la carpeta configurada
-    doc_filename = f"{updated['oferta_referencia']}_generado.docx"
-    pdf_filename = f"{updated['oferta_referencia']}_generado.pdf"
+    doc_filename = f"{updated['oferta_referencia']}.docx"
+    pdf_filename = f"{updated['oferta_referencia']}.pdf"
     doc_path = os.path.join(config.output_folder, doc_filename)
     doc.save(doc_path)
     progress_bar.progress(95)
