@@ -4,19 +4,20 @@ import time
 import os
 from io import BytesIO
 from docx import Document
-import config  # Configuración: correo_proveedor, output_folder, default_template
+import tempfile
+import config  # Configuración: correo_proveedor, modo_guardado, default_template
 
 # --- Sidebar (menú lateral) ---
 with st.sidebar:
     # Logo clicable que redirige a minsait.com  
-    logo_path = "https://pbs.twimg.com/profile_images/1859630278114684929/7BumEThB_200x200.jpg"
+    logo_url = "https://pbs.twimg.com/profile_images/1859630278114684929/7BumEThB_200x200.jpg"
     try:
         import requests, base64
-        response = requests.get(logo_path)
+        response = requests.get(logo_url)
         response.raise_for_status()
         encoded_string = base64.b64encode(response.content).decode()
-        st.markdown(f'<a href="https://minsait.com" target="_blank" ><img src="data:image/jpeg;base64,{encoded_string}" width="150"></a>', unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: left; color: #FF5733;'>Generador de Ofertas</h1>", unsafe_allow_html=True)
+        st.markdown(f'<a href="https://minsait.com" target="_blank"><img src="data:image/jpeg;base64,{encoded_string}" width="150"></a>', unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: left; '>Generador de Ofertas</h1>", unsafe_allow_html=True)
     except Exception as e:
         st.warning("No se pudo cargar el logo desde la URL.")
     
@@ -25,28 +26,40 @@ with st.sidebar:
     # Configuración en expander
     with st.expander("Configuración"):
         new_proveedor = st.text_input("Correo Proveedor Configuración", value=config.correo_proveedor)
-        new_output_folder = st.text_input("Ruta de Salida", value=config.output_folder)
+        # Desplegable para elegir el modo de guardado
+        new_modo_guardado = st.selectbox("Modo de guardado", options=["Mediante descarga", "Mediante ubicación"],
+                                         index=0 if config.modo_guardado=="Mediante descarga" else 1)
         new_default_template = st.text_input("Plantilla por Defecto", value=config.default_template)
+        default_folder = st.text_input("Ubicación de salida(Opcional)", value=config.output_folder)        
         if st.button("Guardar Configuración"):
-            with open("config.py", "w") as f:
+            with open("config.py", "w", encoding="utf-8") as f:
                 f.write(f'correo_proveedor = "{new_proveedor}"\n')
-                f.write(f'output_folder = r"{new_output_folder}"\n')
+                f.write(f'modo_guardado = "{new_modo_guardado}"\n')
                 f.write(f'default_template = r"{new_default_template}"\n')
+                f.write(f'output_folder = r"{default_folder}"\n')
             st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
-
+    
     st.markdown("---")
     st.markdown("**Version:** 1.0.1")
     st.markdown("**Autor:** Pablo Álvaro Hidalgo")
 
 # --- Carga de archivos ---
-col1, col2 = st.columns(2)
+col1, col2= st.columns(2)
 with col1:
     excel_file = st.file_uploader("Selecciona el archivo Excel (.xlsx)", type=["xlsx"])
+    
 with col2:
     template_file = st.file_uploader("Selecciona la plantilla Word (.docx)", type=["docx"])
 
+# --- Campos de texto para ubicación de salida y plantilla por defecto ---
+st.text_input("Plantilla por defecto (Configuración):", value=config.default_template, disabled=True)
+output_folder = st.text_input("Ubicación de salida:", value=getattr(config, "output_folder", ""))
+#Quitamos los espacios en blanco al principio y al final y las comillas
+output_folder = output_folder.strip().replace('"', '').replace("'", "")
+    
+
 if not excel_file:
-    st.warning("Por favor, sube el archivo Excel.")
+    st.warning("Para continuar por favor, sube la Plantilla POST.")
     st.stop()
 
 # --- Función para extraer datos del Excel ---
@@ -82,7 +95,7 @@ def extraer_datos_excel(excel_file):
         "fecha_fin": fecha_fin,
         "descripcion": "",
         "correo_cliente": "",
-        "correo_proveedor": config.correo_proveedor,  # Valor predeterminado desde la configuración
+        "correo_proveedor": config.correo_proveedor,
         "posts": posts,
         "totalh": totalh,
         "totalsiva": totalsiva,
@@ -109,7 +122,7 @@ with st.container():
         correo_cliente = st.text_input("Correo Cliente", value=data["correo_cliente"])
         correo_proveedor = st.text_input("Correo Proveedor", value=data["correo_proveedor"])
         today = st.text_input("Today", value=data["today"])
-        descripcion = st.text_area("Descripción", value=data["descripcion"])
+        descripcion = st.text_area("Descripción (Ignorar si la plantilla ya contiene la descripción)", value=data["descripcion"])
         submitted_dg = st.form_submit_button("Guardar Datos Generales")
     if submitted_dg:
         st.success("Datos Generales guardados.")
@@ -130,7 +143,6 @@ with st.container():
                 default_post = data["posts"][i]
             else:
                 default_post = {"post": "", "horas": "", "costo": ""}
-            # Ajustamos el ancho: 2 para Post, 1 para Horas y 1 para Costo
             col1, col2, col3 = st.columns([2, 1, 1])
             with col1:
                 post_val = st.text_input(f"Post {i+1}", value=default_post["post"], key=f"post_{i}")
@@ -172,8 +184,8 @@ if st.button("Generar Documento"):
     
     st.subheader("Datos Actualizados")
     df_generales = pd.DataFrame({
-        "Campo": ["Oferta de Referencia", "Nombre del Proyecto", "Fecha de Inicio", "Fecha de Fin", "Correo Cliente", "Correo Proveedor", "Descripción", "Today"],
-        "Valor": [updated["oferta_referencia"], updated["nombre_proyecto"], updated["fecha_inicio"], updated["fecha_fin"], updated["correo_cliente"], updated["correo_proveedor"], updated["descripcion"], updated["today"]]
+        "Campo": ["Oferta de Referencia", "Nombre del Proyecto", "Fecha de Inicio", "Fecha de Fin", "Correo Cliente", "Correo Proveedor", "Today", "Descripción"],
+        "Valor": [updated["oferta_referencia"], updated["nombre_proyecto"], updated["fecha_inicio"], updated["fecha_fin"], updated["correo_cliente"], updated["correo_proveedor"], updated["today"], updated["descripcion"]]
     })
     st.table(df_generales)
     
@@ -198,7 +210,7 @@ if st.button("Generar Documento"):
     else:
         template_file.seek(0)
         doc = Document(template_file)
-    progress_bar.progress(20)
+    progress_bar.progress(5)
     
     # Reemplazo de placeholders en datos generales y totales
     placeholders = {
@@ -223,7 +235,7 @@ if st.button("Generar Documento"):
                 for cell in row.cells:
                     if ph in cell.text:
                         cell.text = cell.text.replace(ph, str(val))
-    progress_bar.progress(50)
+    progress_bar.progress(15)
     
     # Reemplazo de placeholders para cada post (<<post1>>, <<posth1>>, <<postc1>>, etc.)
     for i, post in enumerate(updated["posts"], start=1):
@@ -246,7 +258,7 @@ if st.button("Generar Documento"):
                         cell.text = cell.text.replace(ph_posth, post["horas"])
                     if ph_postc in cell.text:
                         cell.text = cell.text.replace(ph_postc, post["costo"])
-    progress_bar.progress(80)
+    progress_bar.progress(50)
     
     # --- Borrar filas vacías de la tabla de perfiles POST y formatear ---
     try:
@@ -258,11 +270,10 @@ if st.button("Generar Documento"):
                 if cell.paragraphs and len(cell.paragraphs[0].runs) > 0:
                     cell.paragraphs[0].runs[0].bold = True
 
-        # Borrar las filas que no estén rellenadas
+        # Borrar las filas que no estén rellenadas (con "-" o con placeholder sin reemplazar)
         rows_to_delete = []
         for i, row in enumerate(table.rows):
             cell_text = row.cells[0].text.strip()
-            # Se borra si es "-" o si parece un placeholder (ej: <<post1>>)
             if cell_text == "-" or (cell_text.startswith("<<") and cell_text.endswith(">>")):
                 rows_to_delete.append(i)
         
@@ -287,19 +298,92 @@ if st.button("Generar Documento"):
         run2.underline = False
     except Exception as e:
         st.error(f"Error en formateo extra del documento: {e}")
-    progress_bar.progress(90)
+    progress_bar.progress(60)
     
-    # Guardar el documento Word y convertirlo a PDF en la carpeta configurada
+    # --- Guardar o descargar el documento según el modo de guardado ---
     doc_filename = f"{updated['oferta_referencia']}.docx"
     pdf_filename = f"{updated['oferta_referencia']}.pdf"
-    doc_path = os.path.join(config.output_folder, doc_filename)
-    doc.save(doc_path)
-    progress_bar.progress(95)
-    try:
-        from docx2pdf import convert
-        pdf_path = os.path.join(config.output_folder, pdf_filename)
-        convert(doc_path, pdf_path)
-        progress_bar.progress(100)
-        st.success(f"Documentos generados correctamente en:\n{config.output_folder}")
-    except Exception as e:
-        st.error(f"El documento Word se generó en {config.output_folder}, pero hubo un error al convertir a PDF: {e}")
+    
+    if config.modo_guardado == "Mediante ubicación":
+        if not output_folder:
+            # Si no se ha especificado una ubicación de salida, se prepara el documento para descarga directamente
+            st.error("No se ha especificado una ubicación de salida.")
+            output_folder = os.path.dirname(excel_file.name)
+            # Convertir el documento a BytesIO para la descarga
+            word_io = BytesIO()
+            doc.save(word_io)
+            word_io.seek(0)
+            progress_bar.progress(100)
+            st.download_button(
+                "Descargar documento Word",
+                data=word_io,
+                file_name=doc_filename,
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                key="download_word"
+            )
+        else:
+            # Guardar el documento Word en la ubicación especificada
+            output_path = os.path.join(output_folder, doc_filename)
+            doc.save(output_path)
+            st.success(f"Documento Word guardado en: {output_path}")
+            progress_bar.progress(65)
+            # Convertir a PDF
+            try:
+                from docx2pdf import convert
+                convert(output_path)
+            except Exception as e:
+                st.error(f"Error al convertir a PDF: {e}")
+            st.success(f"Documento PDF guardado en: {output_path}")
+            progress_bar.progress(100)
+
+    elif config.modo_guardado == "Mediante descarga":
+        # Guardar el documento Word en BytesIO
+        word_io = BytesIO()
+        doc.save(word_io)
+        word_io.seek(0)
+        
+        # Se requiere guardar en disco para convertir a PDF
+        temp_folder = os.getcwd()
+        temp_doc_path = os.path.join(temp_folder, doc_filename)
+        doc.save(temp_doc_path)
+        try:
+            from docx2pdf import convert
+            temp_pdf_path = os.path.join(temp_folder, pdf_filename)
+            convert(temp_doc_path, temp_pdf_path)
+            with open(temp_pdf_path, "rb") as pdf_file:
+                pdf_bytes = pdf_file.read()         
+            pdf_io = BytesIO(pdf_bytes)
+            pdf_io.seek(0)
+            progress_bar.progress(100)
+        except Exception as e:
+            st.error(f"Error al convertir a PDF: {e}")
+            pdf_io = None
+
+        # Preparar el contenido del archivo Excel original
+        excel_file.seek(0)
+        excel_bytes = excel_file.read()
+
+        # Crear un ZIP en memoria con los 3 archivos: Word, PDF (si se generó) y Excel
+        import zipfile
+        zip_io = BytesIO()
+        with zipfile.ZipFile(zip_io, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+            zip_file.writestr(doc_filename, word_io.getvalue())
+            if pdf_io is not None:
+                zip_file.writestr(pdf_filename, pdf_io.getvalue())
+                zip_file.writestr(excel_file.name, excel_bytes)
+        zip_io.seek(0)
+
+        # Borrar archivos temporales creados en disco
+        if os.path.exists(temp_doc_path):
+            os.remove(temp_doc_path)
+        if 'temp_pdf_path' in locals() and os.path.exists(temp_pdf_path):
+            os.remove(temp_pdf_path)
+
+        st.download_button(
+            "Descargar ZIP con todos los archivos",
+            data=zip_io,
+            file_name=f"{updated['oferta_referencia']}.zip",
+            mime="application/zip"
+        )
+    else:
+        st.error("Modo de guardado no reconocido.")
