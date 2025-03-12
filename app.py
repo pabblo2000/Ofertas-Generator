@@ -51,7 +51,7 @@ with st.sidebar:
             st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
     
     st.markdown("---")
-    st.markdown("**Version:** 1.0.1")
+    st.markdown("**Version:** 1.1.1")
     st.markdown("**Autor:** Pablo Álvaro Hidalgo")
 
 # --- Carga de archivos ---
@@ -63,7 +63,7 @@ with col2:
     template_file = st.file_uploader("Selecciona la plantilla Word (.docx)", type=["docx"])
 
 # --- Campos de texto para ubicación de salida y plantilla por defecto ---
-st.text_input("Plantilla por defecto (Configuración):", value=config.default_template, disabled=True)
+st.text_input("Plantilla predeterminada (Se usará en caso de no seleccionar otra plantilla):", value=config.default_template, disabled=True)
 output_folder = st.text_input("Ubicación de salida:", value=getattr(config, "output_folder", ""))
 #Quitamos los espacios en blanco al principio y al final y las comillas
 output_folder = output_folder.strip().replace('"', '').replace("'", "")

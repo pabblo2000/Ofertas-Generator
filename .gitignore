@@ -5,3 +5,4 @@
 *.xlsx
 *.ipynb
 how_to_run
+__pycache__
