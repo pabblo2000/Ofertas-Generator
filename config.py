@@ -1,4 +1,4 @@
-correo_proveedor = ""
-modo_guardado = "Mediante descarga"
-default_template = r""
-output_folder = r""
+correo_proveedor = "eliaslashero@gmail.com"
+modo_guardado = "Mediante ubicación"
+default_template = r"C:\Users\palvaroh\Desktop\plantilla.docx"
+output_folder = r"C:\Users\palvaroh\Desktop"
