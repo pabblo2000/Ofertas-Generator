@@ -1,3 +1,4 @@
+
 # app.py
 import streamlit as st
 import pandas as pd
@@ -7,7 +8,7 @@ from io import BytesIO
 from docx import Document
 import tempfile
 try:
-    import config  # Configuración: correo_proveedor, modo_guardado, default_template
+    import config  # Configuración: correo_proveedor, modo_guardado, default_template, etc.
 except:
     st.error("No se pudo cargar el archivo de configuración.")
     # Creamos un archivo de configuración por defecto
@@ -16,12 +17,17 @@ except:
         f.write('modo_guardado = "Mediante descarga"\n')
         f.write('default_template = r""\n')
         f.write('output_folder = r""\n')
+        f.write('nombre = ""\n')
     st.error("Se ha creado un archivo de configuración por defecto. Por favor, reinicia la app.")
 
 st.set_page_config(
     page_title="Creador de Ofertas",
     page_icon="📄"
 )
+
+#Guardamos la hora para saber si decir buenos dias, tardes o noches
+now  = time.localtime()
+greetings = "Buenos días" if now.tm_hour < 12 else "Buenas tardes" if now.tm_hour < 19 else "Buenas noches"
 
 # --- Sidebar (menú lateral) ---
 with st.sidebar:
@@ -32,11 +38,17 @@ with st.sidebar:
         response = requests.get(logo_url)
         response.raise_for_status()
         encoded_string = base64.b64encode(response.content).decode()
-        st.markdown(f'<a href="https://minsait.com" target="_blank"><img src="data:image/jpeg;base64,{encoded_string}" width="150"></a>', unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: left; '>Generador de Ofertas</h1>", unsafe_allow_html=True)
+        left_col, right_col = st.columns([1, 2])
+        with left_col:
+            st.markdown(f'<a href="https://minsait.com" target="_blank"><img src="data:image/jpeg;base64,{encoded_string}" width="100" style="margin-top: -20px;"></a>', unsafe_allow_html=True)
+        with right_col:
+            st.markdown("<h1 style='text-align: left; margin-top: -40px;'>Generador de Ofertas\n</h1>", unsafe_allow_html=True)
+            try:
+                st.markdown(f"<p style='text-align: left; margin-top: -20px;'>{greetings} {config.nombre}</p>", unsafe_allow_html=True)
+            except:
+                st.markdown(f"<p style='text-align: left; margin-top: -20px;'>Bienvenido</p>", unsafe_allow_html=True)
     except Exception as e:
-        st.warning("No se pudo cargar el logo desde la URL.")
-    
+        st.warning("Error al cargar")
     st.markdown("---")
     
     # Configuración en expander
@@ -53,6 +65,7 @@ with st.sidebar:
                 f.write(f'modo_guardado = "{new_modo_guardado}"\n')
                 f.write(f'default_template = r"{new_default_template}"\n')
                 f.write(f'output_folder = r"{default_folder}"\n')
+                f.write(f'nombre = "{config.nombre}"\n')
             st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
     
     st.markdown("---")
@@ -63,7 +76,6 @@ with st.sidebar:
 col1, col2= st.columns(2)
 with col1:
     excel_file = st.file_uploader("Selecciona el archivo Excel (.xlsx)", type=["xlsx"])
-    
 with col2:
     template_file = st.file_uploader("Selecciona la plantilla Word (.docx)", type=["docx"])
 
@@ -85,9 +97,8 @@ def extraer_datos_excel(excel_file):
     nombre_proyecto = df.loc[6, 1]
     fecha_inicio = pd.to_datetime(df.loc[3, 6], format='%d.%m.%Y').strftime('%d/%m/%Y')
     fecha_fin = pd.to_datetime(df.loc[4, 6], format='%d.%m.%Y').strftime('%d/%m/%Y')
-    sda = df.loc[7, 1]
-    if pd.notna(sda):
-        nombre_proyecto = f"{nombre_proyecto} ({sda})"
+    # Extraer SDA de la celda B8 (fila 8, columna 2: índices 7,1)
+    sda = df.loc[7, 1] if pd.notna(df.loc[7, 1]) else ""
     
     # Extracción de posts (máx. 5)
     posts = []
@@ -112,6 +123,7 @@ def extraer_datos_excel(excel_file):
         "descripcion": "",
         "correo_cliente": "",
         "correo_proveedor": config.correo_proveedor,
+        "sda": sda,
         "posts": posts,
         "totalh": totalh,
         "totalsiva": totalsiva,
@@ -132,7 +144,15 @@ with st.container():
     st.subheader("Datos Generales")
     with st.form("form_datos_generales", clear_on_submit=False):
         oferta_referencia = st.text_input("Oferta de Referencia", value=data["oferta_referencia"])
-        nombre_proyecto = st.text_input("Nombre del Proyecto", value=data["nombre_proyecto"])
+        # Permitir editar el nombre original del proyecto
+        nombre_proyecto_original = st.text_input("Nombre del Proyecto", value=data["nombre_proyecto"])
+        # Nuevo campo SDA (editable), auto-rellenado desde celda B8
+        sda_field = st.text_input("SDA (Si hay SDA, saldrá despues del nombre del proyecto entre parentesis)", value=data["sda"])
+        # Actualiza el nombre del proyecto según SDA: si SDA tiene contenido, concatena; si no, solo el nombre original
+        if sda_field.strip():
+            nombre_proyecto = f"{nombre_proyecto_original} ({sda_field.strip()})"
+        else:
+            nombre_proyecto = nombre_proyecto_original
         fecha_inicio = st.text_input("Fecha de Inicio", value=data["fecha_inicio"])
         fecha_fin = st.text_input("Fecha de Fin", value=data["fecha_fin"])
         correo_cliente = st.text_input("Correo Cliente", value=data["correo_cliente"])
