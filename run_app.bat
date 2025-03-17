@@ -1,5 +1,2 @@
 @echo off
-cd /d %~dp0
-call .venv\Scripts\activate
-streamlit run app.py
-pause
+powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0bootstrap.ps1"
