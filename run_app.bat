@@ -1,2 +1,3 @@
 @echo off
-powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0bootstrap.ps1"
+cd /d "%~dp0"
+powershell -ExecutionPolicy Bypass -NoExit -File run_app.ps1

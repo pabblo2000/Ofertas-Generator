@@ -10,12 +10,12 @@ import tempfile
 try:
     import config  # Configuración: correo_proveedor, modo_guardado, default_template, etc.
 except:
-    st.error("No se pudo cargar el archivo de configuración.")
+    st.error("No se pudo cargar el archivo de configuración, si acabas de instalar la app recarga la página.")
     # Creamos un archivo de configuración por defecto
     with open("config.py", "w", encoding="utf-8") as f:
         f.write('correo_proveedor = ""\n')
         f.write('modo_guardado = "Mediante descarga"\n')
-        f.write('default_template = r""\n')
+        f.write('default_template = r".\plantilla.docx"\n')
         f.write('output_folder = r""\n')
         f.write('nombre = ""\n')
     st.error("Se ha creado un archivo de configuración por defecto. Por favor, reinicia la app.")
