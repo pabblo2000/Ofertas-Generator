@@ -49,6 +49,21 @@ python -m pip install -r requirements.txt
 Write-Host "*******************************************************"
 Write-Host "**** APLICACION INSTALADA ****"
 Write-Host "*******************************************************"
+$name = Read-Host "Ingrese su nombre"
+$configContent = @"
+correo_proveedor = ""
+modo_guardado = "Mediante descarga"
+default_template = r".\plantilla.docx"
+output_folder = r""
+nombre = '$name'
+"@
+Set-Content -Path "config.py" -Value $configContent -Encoding UTF8
+Write-Host "Archivo config.py creado con la variable 'nombre' y valores por defecto."
+
+
+
+
 Write-Host "**** EJECUTE run_app.vbs PARA INICIAR LA APLICACION ****"
 Write-Host "*******************************************************"
+
 Pause
