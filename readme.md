@@ -12,9 +12,10 @@ Generador de Ofertas es una aplicación desarrollada en Streamlit que permite ge
   - `output_folder = r"C:\Users\TuUsuario\Desktop"`
   - `nombre = "TuNombre"`
 - **requirements.txt**: Lista de dependencias necesarias.
-- **installer.ps1**: Script de PowerShell que crea el entorno virtual (.venv), instala Python (si es necesario), instala las dependencias y, si falta la variable `nombre` en config.py, solicita su valor. Al finalizar, muestra un mensaje rodeado de asteriscos indicando que la aplicación está instalada.
-- **run_app.ps1**: Script de PowerShell que activa el entorno virtual y ejecuta la aplicación con `python -m streamlit run app.py`.
+- **ins.ps1**: Script de PowerShell que crea el entorno virtual (.venv), instala Python (si es necesario), instala las dependencias y, si falta la variable `nombre` en config.py, solicita su valor. Al finalizar, muestra un mensaje rodeado de asteriscos indicando que la aplicación está instalada.
 - **installer.bat**: Archivo por lotes para ejecutar installer.ps1, mostrando la terminal y los outputs.
+- **run.ps1**: Script de PowerShell que activa el entorno virtual y ejecuta la aplicación con `python -m streamlit run app.py`.
+- **run.bat**: Archivo por lotes para ejecutar run.ps1, mostrando la terminal y los outputs.
 - **run_app.vbs**: Script VBScript para ejecutar run_app.ps1 sin mostrar la ventana de la terminal.
 
 ## Instalación y Configuración
@@ -38,10 +39,10 @@ Generador de Ofertas es una aplicación desarrollada en Streamlit que permite ge
      - La consola permanecerá abierta para que el usuario pueda ver el progreso.
 
 3. **Ejecución**:
-   - Una vez instalado, el usuario tiene dos opciones para ejecutar la aplicación:
-     - Ejecutar **run_app.bat** (esto mostrará la terminal y ejecutará `python -m streamlit run app.py` con la activación del entorno virtual).
-     - O hacer doble clic en **run_app.vbs** para ejecutar la aplicación sin mostrar la terminal.  
-       *Importante:* Si se detecta que el entorno virtual no existe, el script indicará que primero se debe ejecutar installer.bat.
+
+- Una vez instalado, el usuario tiene una forma sencilla de ejecutar la aplicación:
+  - Hacer doble clic en **run_app.vbs** para ejecutar la aplicación sin mostrar la terminal.  
+     *Importante:* Si se detecta que el entorno virtual no existe, el script indicará que primero se debe ejecutar installer.bat.
 
 ## Uso de la Aplicación
 

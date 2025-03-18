@@ -1,9 +1,9 @@
 $OutputEncoding = [System.Text.Encoding]::UTF8
 Write-Host "Iniciando instalacion..."
 
-# Comprobar si Python está instalado
+# Comprobar si Python esta instalado
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
-    Write-Host "Python no se encuentra instalado. Se procederá a descargar e instalar Python 3.11.9..."
+    Write-Host "Python no se encuentra instalado. Se procedera a descargar e instalar Python 3.11.9..."
     $pythonInstallerUrl = "https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe"
     $installerPath = "$env:TEMP\python-3.11.9-amd64.exe"
     Invoke-WebRequest -Uri $pythonInstallerUrl -OutFile $installerPath
@@ -17,7 +17,7 @@ if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
         Write-Host "Python 3.11.9 instalado correctamente."
     }
 } else {
-    Write-Host "Python ya está instalado."
+    Write-Host "Python ya esta instalado."
 }
 
 # Verificar si existe el entorno virtual (.venv) y crearlo si no existe
@@ -49,21 +49,7 @@ python -m pip install -r requirements.txt
 Write-Host "*******************************************************"
 Write-Host "**** APLICACION INSTALADA ****"
 Write-Host "*******************************************************"
-$name = Read-Host "Ingrese su nombre"
-$configContent = @"
-correo_proveedor = ""
-modo_guardado = "Mediante descarga"
-default_template = r".\plantilla.docx"
-output_folder = r""
-nombre = '$name'
-"@
-Set-Content -Path "config.py" -Value $configContent -Encoding UTF8
-Write-Host "Archivo config.py creado con la variable 'nombre' y valores por defecto."
-
-
-
-
 Write-Host "**** EJECUTE run_app.vbs PARA INICIAR LA APLICACION ****"
 Write-Host "*******************************************************"
-
-Pause
+Write-Host "Puede cerrar esta ventana."
+exit 0
