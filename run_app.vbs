@@ -1,5 +1,12 @@
-' run_app.vbs'
+Set fso = CreateObject("Scripting.FileSystemObject")
+If fso.FileExists("config.py") Then
+    windowStyle = 0
+Else
+    windowStyle = 1
+End If
+
 Set WshShell = CreateObject("WScript.Shell")
-' Ejecuta run_app.ps1 de forma oculta (0 para ventana oculta)
-WshShell.Run "powershell -ExecutionPolicy Bypass -File """ & CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName) & "\run.ps1""", 0
+WshShell.Run "powershell -ExecutionPolicy Bypass -NoExit -File """ & fso.GetParentFolderName(WScript.ScriptFullName) & "\run.ps1""", windowStyle
 Set WshShell = Nothing
+Set fso = Nothing
+WScript.Quit

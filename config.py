@@ -1,4 +1,4 @@
-correo_proveedor = "eliaslashero@gmail.com"
+correo_proveedor = "eliaslashero@gmail.com, palvaroh@minsait.com"
 modo_guardado = "Mediante descarga"
 default_template = r"C:\Users\palvaroh\Desktop\plantilla.docx"
 output_folder = r"C:\Users\palvaroh\Desktop"
