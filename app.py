@@ -262,17 +262,17 @@ with st.container():
 # SECCIÓN 2: POSTS Y TOTALES
 # =============================================================================
 with st.container():
-    st.subheader("Posts", anchor=None)
+    st.subheader("Perfiles", anchor=None)
     col_action1, col_action2 = st.columns(2)
     with col_action1:
-        if st.button("Agregar Post", key="agregar_post", help="Agrega un Perfil POST hasta un maximo de 5") and st.session_state.n_posts < 5:
+        if st.button("Agregar Perfil", key="agregar_post", help="Agrega un Perfil POST hasta un maximo de 5") and st.session_state.n_posts < 5:
             st.session_state.n_posts += 1
     with col_action2:
-        if st.button("Borrar Post", key="borrar_post", help = "Borrar un Perfil POST") and st.session_state.n_posts > 1:
+        if st.button("Borrar Perfil", key="borrar_post", help = "Borrar un Perfil POST") and st.session_state.n_posts > 1:
             st.session_state.n_posts -= 1
 
     with st.form("form_posts", clear_on_submit=False):
-        st.markdown("#### Edición de Posts")
+        st.markdown("#### Edición de Perfiles Posts")
         posts = []
         for i in range(st.session_state.n_posts):
             if i < len(data["posts"]):
@@ -281,11 +281,11 @@ with st.container():
                 default_post = {"post": "", "horas": "", "costo": ""}
             col1, col2, col3 = st.columns([2, 1, 1])
             with col1:
-                post_val = st.text_input(f"Post {i+1}", value=default_post["post"], key=f"post_{i}", placeholder=f"<<post{i+1}>>", help=f"Columna A11:A78")
+                post_val = st.text_input(f"Perfil Post {i+1}", value=default_post["post"], key=f"post_{i}", placeholder=f"<<post{i+1}>>", help=f"Columna A11:A78")
             with col2:
-                post_horas = st.text_input(f"Horas Post {i+1}", value=default_post["horas"], key=f"posth_{i}", placeholder=f"<<posth{i+1}>>", help=f"Columna D11:D78")
+                post_horas = st.text_input(f"Horas Perfil Post {i+1}", value=default_post["horas"], key=f"posth_{i}", placeholder=f"<<posth{i+1}>>", help=f"Columna D11:D78")
             with col3:
-                post_costo = st.text_input(f"Costo Post {i+1}", value=default_post["costo"], key=f"postc_{i}", placeholder=f"<<postc{i+1}>>", help=f"Columna G11:G78")
+                post_costo = st.text_input(f"Costo Perfil Post {i+1}", value=default_post["costo"], key=f"postc_{i}", placeholder=f"<<postc{i+1}>>", help=f"Columna G11:G78")
             posts.append({"post": post_val, "horas": post_horas, "costo": post_costo})
         
         st.markdown("#### Totales")
