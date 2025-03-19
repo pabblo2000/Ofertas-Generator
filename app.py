@@ -98,7 +98,7 @@ with st.sidebar:
             st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
     
     st.markdown("---")
-    st.markdown("**Version:** 1.4.1")
+    st.markdown("**Version:** 1.4.2")
     st.markdown("**Autor:** Pablo Álvaro Hidalgo")
 
 # --- Carga de archivos ---
@@ -302,61 +302,62 @@ with st.container():
 # =============================================================================
 # SECCIÓN 3: CAMPOS PERSONALIZADOS(Opcional)
 # =============================================================================
-with st.container():
-    st.subheader("Campos Personalizados", anchor=None)
-    
-    # Inicializar contadores en 0 para que empiece sin ningun campo
-    if "n_custom_fields" not in st.session_state:
-        st.session_state.n_custom_fields = 0
-    if "n_large_custom_fields" not in st.session_state:
-        st.session_state.n_large_custom_fields = 0
-
-    # Botones para agregar y quitar campos:
-    # Agregar Campo, Quitar Campo, Agregar Campo Grande, Quitar Campo Grande
-    col_add, col_remove, col_add_large, col_remove_large = st.columns(4)
-    with col_add:
-        if st.button("Agregar Campo"):
-            st.session_state.n_custom_fields += 1
-    with col_remove:
-        if st.button("Quitar Campo") and st.session_state.n_custom_fields > 0:
-            st.session_state.n_custom_fields -= 1
-    with col_add_large:
-        if st.button("Agregar Parrafo"):
-            st.session_state.n_large_custom_fields += 1
-    with col_remove_large:
-        if st.button("Quitar Parrafo") and st.session_state.n_large_custom_fields > 0:
-            st.session_state.n_large_custom_fields -= 1
-
-    # Formulario para campos personalizados
-    with st.form("form_campos_personalizados", clear_on_submit=False):
-        custom_fields = []
+if config.enable_custom_fields:
+    with st.container():
+        st.subheader("Campos Personalizados", anchor=None)
         
-        # Verificar si hay campos de texto cortos o grandes
-        if st.session_state.n_custom_fields == 0 and st.session_state.n_large_custom_fields == 0:
-            st.markdown("#### No hay ningun campo")
-        else:
-            if st.session_state.n_custom_fields > 0:
-                st.markdown("#### Campos de Texto Cortos")
-                for i in range(st.session_state.n_custom_fields):
-                    col_placeholder, col_reemplazo = st.columns(2)
-                    with col_placeholder:
-                        placeholder_val = st.text_input(f"Placeholder Campo {i+1}", value=f"<<campo{i+1}>>", key=f"ph_campo_{i}")
-                    with col_reemplazo:
-                        replacement_val = st.text_input(f"Reemplazo Campo {i+1}", value="", key=f"campo_{i}")
-                    custom_fields.append({"placeholder": placeholder_val, "replacement": replacement_val})
-            if st.session_state.n_large_custom_fields > 0:
-                st.markdown("#### Campos de Parrafos")
-                for j in range(st.session_state.n_large_custom_fields):
-                    col_placeholder, col_reemplazo = st.columns(2)
-                    with col_placeholder:
-                        placeholder_val = st.text_input(f"Placeholder Parrafos {j+1}", value=f"<<campo_grande{j+1}>>", key=f"ph_campo_grande_{j}")
-                    with col_reemplazo:
-                        replacement_val = st.text_area(f"Reemplazo Parrafo {j+1}", value="", key=f"campo_grande_{j}")
-                    custom_fields.append({"placeholder": placeholder_val, "replacement": replacement_val})
-        
-        submitted_cp = st.form_submit_button("Guardar Campos Personalizados")
-        if submitted_cp:
-            st.success("Campos Personalizados guardados.")
+        # Inicializar contadores en 0 para que empiece sin ningun campo
+        if "n_custom_fields" not in st.session_state:
+            st.session_state.n_custom_fields = 0
+        if "n_large_custom_fields" not in st.session_state:
+            st.session_state.n_large_custom_fields = 0
+
+        # Botones para agregar y quitar campos:
+        # Agregar Campo, Quitar Campo, Agregar Campo Grande, Quitar Campo Grande
+        col_add, col_remove, col_add_large, col_remove_large = st.columns(4)
+        with col_add:
+            if st.button("Agregar Campo"):
+                st.session_state.n_custom_fields += 1
+        with col_remove:
+            if st.button("Quitar Campo") and st.session_state.n_custom_fields > 0:
+                st.session_state.n_custom_fields -= 1
+        with col_add_large:
+            if st.button("Agregar Parrafo"):
+                st.session_state.n_large_custom_fields += 1
+        with col_remove_large:
+            if st.button("Quitar Parrafo") and st.session_state.n_large_custom_fields > 0:
+                st.session_state.n_large_custom_fields -= 1
+
+        # Formulario para campos personalizados
+        with st.form("form_campos_personalizados", clear_on_submit=False):
+            custom_fields = []
+            
+            # Verificar si hay campos de texto cortos o grandes
+            if st.session_state.n_custom_fields == 0 and st.session_state.n_large_custom_fields == 0:
+                st.markdown("#### No hay ningun campo")
+            else:
+                if st.session_state.n_custom_fields > 0:
+                    st.markdown("#### Campos de Texto Cortos")
+                    for i in range(st.session_state.n_custom_fields):
+                        col_placeholder, col_reemplazo = st.columns(2)
+                        with col_placeholder:
+                            placeholder_val = st.text_input(f"Placeholder Campo {i+1}", value=f"<<campo{i+1}>>", key=f"ph_campo_{i}")
+                        with col_reemplazo:
+                            replacement_val = st.text_input(f"Reemplazo Campo {i+1}", value="", key=f"campo_{i}")
+                        custom_fields.append({"placeholder": placeholder_val, "replacement": replacement_val})
+                if st.session_state.n_large_custom_fields > 0:
+                    st.markdown("#### Campos de Parrafos")
+                    for j in range(st.session_state.n_large_custom_fields):
+                        col_placeholder, col_reemplazo = st.columns(2)
+                        with col_placeholder:
+                            placeholder_val = st.text_input(f"Placeholder Parrafos {j+1}", value=f"<<campo_grande{j+1}>>", key=f"ph_campo_grande_{j}")
+                        with col_reemplazo:
+                            replacement_val = st.text_area(f"Reemplazo Parrafo {j+1}", value="", key=f"campo_grande_{j}")
+                        custom_fields.append({"placeholder": placeholder_val, "replacement": replacement_val})
+            
+            submitted_cp = st.form_submit_button("Guardar Campos Personalizados")
+            if submitted_cp:
+                st.success("Campos Personalizados guardados.")
 
 # =============================================================================
 # SECCIÓN FINAL: GENERAR DOCUMENTO
