@@ -13,7 +13,7 @@ if (-not (Test-Path "config.py")) {
     $nombre = Read-Host "Ingrese su nombre"
     $configContent = @"
     
-correo_proveedor = "correo"
+correo_proveedor = ""
 modo_guardado = "$modo_guardado"
 default_template = r".\plantilla.docx"
 output_folder = r""

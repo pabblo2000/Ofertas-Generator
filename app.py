@@ -98,7 +98,7 @@ with st.sidebar:
             st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
     
     st.markdown("---")
-    st.markdown("**Version:** 1.4.2")
+    st.markdown("**Version:** 1.4.3")
     st.markdown("**Autor:** Pablo Álvaro Hidalgo")
 
 # --- Carga de archivos ---
@@ -167,13 +167,13 @@ def extraer_datos_excel(excel_file):
     except:
         sda = ""
     
-    # Extracción de posts (máx. 5)
+    # Extracción de posts (máx. 10)
     posts = []
     for i in range(10, 78):
         if df.loc[i, 6] != 0:
             precio = '{:,.2f}'.format(float(df.loc[i, 6])).replace(',', 'X').replace('.', ',').replace('X', '.')
             posts.append({"post": df.loc[i, 0], "horas": df.loc[i, 3], "costo": precio})
-            if len(posts) >= 5:
+            if len(posts) >= 10:
                 break
 
     # Totales
@@ -265,7 +265,7 @@ with st.container():
     st.subheader("Perfiles", anchor=None)
     col_action1, col_action2 = st.columns(2)
     with col_action1:
-        if st.button("Agregar Perfil", key="agregar_post", help="Agrega un Perfil POST hasta un maximo de 5") and st.session_state.n_posts < 5:
+        if st.button("Agregar Perfil", key="agregar_post", help="Agrega un Perfil POST hasta un maximo de 10") and st.session_state.n_posts < 10:
             st.session_state.n_posts += 1
     with col_action2:
         if st.button("Borrar Perfil", key="borrar_post", help = "Borrar un Perfil POST") and st.session_state.n_posts > 1:
@@ -511,8 +511,10 @@ with st.container():
         pdf_filename = f"{updated['oferta_referencia']}.pdf"
         
         # Decisión basada en config.selected_docs: si se selecciona un único documento o ambos
-        if len(config.selected_docs) == 1:
-            if "Word" in config.selected_docs:
+        if len(config.selected_docs) == 1 or len(config.selected_docs) == 0:
+            if "Word" in config.selected_docs or len(config.selected_docs) == 0:
+                if len(config.selected_docs) == 0:
+                    st.warning("No se ha seleccionado un documento de descarga específico. Por defedcto se generará un documento Word.")
                 # Genera únicamente documento Word
                 if config.modo_guardado == "Mediante ubicación":
                     if not output_folder:
