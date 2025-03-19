@@ -12,6 +12,10 @@ modo_guardado = "$modo_guardado"
 default_template = r".\plantilla.docx"
 output_folder = r""
 nombre = "$nombre"
+selected_docs = ["Word", "PDF"]
+enable_advanced_date_fields = False
+enable_custom_fields = False
+
 "@
     Set-Content -Path "config.py" -Value $configContent -Encoding UTF8
     Write-Host "Archivo config.py creado con exito."
@@ -23,7 +27,8 @@ nombre = "$nombre"
    | |    | |/ _ \/ __|/ _ \ | __| '_ \| / __| | __/ _` | '_ \ 
    | |____| | (_) \__ \  __/ | |_| | | | \__ \ | || (_| | |_) |
     \_____|_|\___/|___/\___|  \__|_| |_|_|___/  \__\__,_|_.__/ 
-                                                                                                                                                                                                                                                                                                                                                         
+                                                               
+                                                                                                                                                                                                                                                                                                       
 "@
 
 }

@@ -1,5 +1,8 @@
-correo_proveedor = "eliaslashero@gmail.com, palvaroh@minsait.com"
+correo_proveedor = ""
 modo_guardado = "Mediante descarga"
-default_template = r"C:\Users\palvaroh\Desktop\plantilla.docx"
-output_folder = r"C:\Users\palvaroh\Desktop"
-nombre = "Pablo"
+default_template = r".\plantilla.docx"
+output_folder = r""
+nombre = ""
+selected_docs = ['PDF']
+enable_advanced_date_fields = True
+enable_custom_fields = False
