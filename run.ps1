@@ -1,5 +1,11 @@
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
+# Verificar si existe el entorno virtual (.venv)
+if (-not (Test-Path ".venv")) {
+    Write-Host "Entorno virtual no encontrado. Ejecutando installer.bat..."
+    Start-Process -Wait -FilePath ".\installer.bat"
+}
+
 # Si config.py no existe, solicitar datos y crearlo
 if (-not (Test-Path "config.py")) {
     Write-Host "config.py no encontrado. Por favor, ingrese los siguientes datos para la configuracion."
@@ -32,12 +38,6 @@ enable_custom_fields = False
 
 }
 
-# Verificar si existe el entorno virtual (.venv)
-if (-not (Test-Path ".venv")) {
-    Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show("No se encontro el entorno virtual. Por favor, ejecute installer.bat primero.", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
-    exit 1
-}
 
 Write-Host "Activando el entorno virtual..."
 & .\.venv\Scripts\Activate.ps1
