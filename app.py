@@ -266,8 +266,12 @@ with st.container():
         # Descripción y Alcance
         if config.enable_description:
             descripcion = st.text_area("Descripción", value=data["descripcion"], help = "Ignorar si la plantilla ya contiene la descripción",  placeholder = "<<descripcion>>")
+        else:
+            descripcion = ""
         if config.enable_alcance:
             alcance = st.text_area("Alcance", value=data["alcance"], help = "Ignorar si la plantilla ya contiene el alcance", placeholder = "<<alcance>>")
+        else:
+            alcance = ""
         #--------------#
 
         submitted_dg = st.form_submit_button("Guardar Datos Generales")
@@ -388,7 +392,7 @@ with st.container():
             "correo_cliente": correo_cliente,
             "correo_proveedor": correo_proveedor,
             "descripcion": descripcion,
-            "alcance": alcance if "Word" in config.selected_docs else "",
+            "alcance": alcance,
             "today": today,
             "posts": posts,
             "totalh": totalh,
@@ -544,11 +548,17 @@ with st.container():
                     key="download_word_single"
                 )
             elif "PDF" in config.selected_docs:
+                # Aviso de conversión a PDF
+                st.info("Convirtiendo a PDF, por favor espere...")
                 # Genera únicamente documento PDF (conversión desde el Word generado) (descarga)
-                with tempfile.TemporaryDirectory() as temp_folder:
-                    temp_doc_path = os.path.join(temp_folder, doc_filename)
+                if not os.path.exists(r".\temp"):
+                    os.makedirs(r".\temp")
+                with tempfile.TemporaryDirectory(dir=r".\temp") as temp_folder:
+                    temp_doc_path = os.path.join(temp_folder, "temp.docx")
                     doc.save(temp_doc_path)
                     try:
+                        import pythoncom
+                        pythoncom.CoInitialize()
                         from docx2pdf import convert
                         temp_pdf_path = os.path.join(temp_folder, pdf_filename)
                         convert(temp_doc_path, temp_pdf_path)
@@ -568,22 +578,33 @@ with st.container():
                         st.error(f"Error al convertir a PDF: {e}")
         elif len(config.selected_docs) >= 2:
             # Genera ambos documentos y los empaqueta en un ZIP (descarga)
+            temp_doc_path = r".\temp\temp.docx"
             word_io = BytesIO()
             doc.save(word_io)
             word_io.seek(0)
-            with tempfile.TemporaryDirectory() as temp_folder:
-                temp_doc_path = os.path.join(temp_folder, doc_filename)
-                doc.save(temp_doc_path)
+            
+            if not os.path.exists(r".\temp"):
+                os.makedirs(r".\temp")
+            with tempfile.TemporaryDirectory(dir=r".\temp") as temp_folder:
                 try:
+                    # Aviso de conversión a PDF
+                    st.info("Convirtiendo a PDF, por favor espere...")
+                    import pythoncom
+                    pythoncom.CoInitialize()
                     from docx2pdf import convert
                     temp_pdf_path = os.path.join(temp_folder, pdf_filename)
-                    convert(temp_doc_path, temp_pdf_path)
+                    # Guardar el documento Word temporalmente en la carpeta .\temp
+                    temp_doc_fullpath = os.path.join(temp_folder, "temp.docx")
+                    doc.save(temp_doc_fullpath)
+                    convert(temp_doc_fullpath, temp_pdf_path)
                     with open(temp_pdf_path, "rb") as pdf_file:
                         pdf_bytes = pdf_file.read()
                     pdf_io = BytesIO(pdf_bytes)
                     pdf_io.seek(0)
                     progress_bar.progress(100)
                 except Exception as e:
+                    st.error(f"Error al convertir a PDF: {e}")
+                    pdf_io = None
                     st.error(f"Error al convertir a PDF: {e}")
                     pdf_io = None
 
