@@ -42,9 +42,9 @@
      - Iniciar la aplicación en **Streamlit** de forma automática y silenciosa.
    - Durante el proceso, se mostrará un mensaje de confirmación similar a:
 
-     ¿¿¿bash
+     ```bash
      **** APLICACION INSTALADA ****
-     ¿¿¿
+     ```
 
 ## Uso de la Aplicación
 
