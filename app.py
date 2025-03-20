@@ -15,28 +15,31 @@ except:
     # Creamos un archivo de configuración por defecto
     with open("config.py", "w", encoding="utf-8") as f:
         f.write('correo_proveedor = ""\n')
-        f.write('modo_guardado = "Mediante descarga"\n')
-        f.write('default_template = r".\plantilla.docx"\n')
-        f.write('output_folder = r""\n')
+        f.write('default_template = r".default.docx"\n')
         f.write('nombre = ""\n')
         f.write('selected_docs = ["Word", "PDF"]\n') # En un futuro se podrá seleccionar Excel
         f.write('enable_advanced_date_fields = True\n')
         f.write('enable_custom_fields = False\n')
+        # Agregamos campos para quitar el apartado de descripción y alcance
+        f.write('enable_description = True\n')
+        f.write('enable_alcance = True\n')
     st.error("Se ha creado un archivo de configuración por defecto. Por favor, reinicia la app.")
 
 # Verificamos que config tiene todos los campos necesarios
-if not hasattr(config, "correo_proveedor") and not hasattr(config, "modo_guardado") and not hasattr(config, "default_template") and not hasattr(config, "output_folder") and not hasattr(config, "nombre") and not hasattr(config, "selected_docs") and not hasattr(config, "enable_advanced_date_fields") and not hasattr(config, "enable_custom_fields"):
+if not hasattr(config, "correo_proveedor") and not hasattr(config, "default_template") and not hasattr(config, "nombre") \
+    and not hasattr(config, "selected_docs") and not hasattr(config, "enable_advanced_date_fields") and not hasattr(config, "enable_custom_fields"):
     st.error("El archivo de configuración no tiene todos los campos necesarios, por favor, reinicia la app.")
     with open("config.py", "w", encoding="utf-8") as f:
         f.write('correo_proveedor = ""\n')
-        f.write('modo_guardado = "Mediante descarga"\n')
-        f.write('default_template = r".\plantilla.docx"\n')
-        f.write('output_folder = r""\n')
+        f.write('default_template = r".default.docx"\n')
         f.write('nombre = ""\n')
         f.write('selected_docs = ["Word", "PDF"]\n') # En un futuro se podrá seleccionar Excel
         f.write('enable_advanced_date_fields = True\n')
         f.write('enable_custom_fields = False\n')
-    
+        # Agregamos campos para quitar el apartado de descripción y alcance
+        f.write('enable_description = True\n')
+        f.write('enable_alcance = True\n')
+       
 
 st.set_page_config(
     page_title="Creador de Ofertas",
@@ -74,31 +77,42 @@ with st.sidebar:
         # Toggle para habilitar campos personalizados
         
         new_proveedor = st.text_input("Correo Proveedor Predeterminado", value=config.correo_proveedor)
-        new_modo_guardado = st.selectbox("Modo de guardado", options=["Mediante descarga", "Mediante ubicación"],
-                                         index=0 if config.modo_guardado=="Mediante descarga" else 1)
-
-        new_default_template = st.text_input("Plantilla por Defecto", value=config.default_template, help="Reemplaza la plantilla por defecto, recomendado solo si se ha modificado la plantilla original")
-        default_folder = st.text_input("Ubicación de Salida Predeterminado", value=config.output_folder, help="Solo si se ha seleccionado 'Mediante ubicación'")  
+        try:
+            plantilla_dir = r".\plantillas"
+            template_files = [f for f in os.listdir(plantilla_dir) if f.lower().endswith(".docx")]
+        except Exception as e:
+            template_files = []
+            st.error(f"Error al listar archivos en {plantilla_dir}: {e}")
+        new_default_template = st.selectbox(
+            "Plantilla por Defecto (Selecciona una)", 
+            options=template_files if template_files else [config.default_template],
+            index=0,
+            help="Reemplaza la plantilla por defecto, recomendado solo si se ha modificado la plantilla original"
+        )
         selected_docs = st.multiselect("Documentos a generar", options=["Word", "PDF"], default=config.selected_docs, help="Selecciona los documentos a generar")
         enable_advanced_date_fields = st.toggle("Habilitar campos de fecha avanzados",
                                                 value=getattr(config, "enable_advanced_date_fields", True), help="Permite seleccionar fechas con calendario")      
+        enable_description = st.toggle("Habilitar descripción",
+                                      value=getattr(config, "enable_description", True), help="Permite añadir descripción en el documento")
+        enable_alcance = st.toggle("Habilitar alcance",
+                                  value=getattr(config, "enable_alcance", True), help="Permite añadir alcance en el documento")
         enable_custom_fields = st.toggle("Habilitar campos personalizados", 
                                         value=getattr(config, "enable_custom_fields", False), help="Permite añadir campos personalizados en el documento")
         
         if st.button("Guardar Configuración"):
             with open("config.py", "w", encoding="utf-8") as f:
                 f.write(f'correo_proveedor = "{new_proveedor}"\n')
-                f.write(f'modo_guardado = "{new_modo_guardado}"\n')
                 f.write(f'default_template = r"{new_default_template}"\n')
-                f.write(f'output_folder = r"{default_folder}"\n')
                 f.write(f'nombre = "{config.nombre}"\n')
                 f.write(f'selected_docs = {selected_docs}\n')
                 f.write(f'enable_advanced_date_fields = {enable_advanced_date_fields}\n')
                 f.write(f'enable_custom_fields = {enable_custom_fields}\n')
+                f.write(f'enable_description = {enable_description}\n')
+                f.write(f'enable_alcance = {enable_alcance}\n')
             st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
     
     st.markdown("---")
-    st.markdown("**Version:** 1.4.3")
+    st.markdown("**Version:** 1.4.5")
     st.markdown("**Autor:** Pablo Álvaro Hidalgo")
 
 # --- Carga de archivos ---
@@ -122,24 +136,21 @@ with col2:
     template_file = st.file_uploader("Selecciona la plantilla Word (.docx)", type=["docx"])
     # Boton para descargar plantilla vacia
 
-    word_template_path = r".\plantilla.docx"
-    if os.path.exists(word_template_path):
-        with open(word_template_path, "rb") as f:
+    default_template_path = os.path.join("plantillas", config.default_template) if os.path.exists(os.path.join("plantillas", config.default_template)) else config.default_template
+    if os.path.exists(default_template_path):
+        with open(default_template_path, "rb") as f:
             st.download_button(
                 label="Descargar plantilla Word vacía",
                 data=f,
-                file_name="plantilla.docx",
+                file_name=config.default_template,
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
+    else:
+        st.warning("Plantilla Word por defecto no encontrada")
     
 
 # --- Campos de texto para ubicación de salida y plantilla por defecto ---
 st.text_input("Plantilla predeterminada (Se usará en caso de no seleccionar otra plantilla):", value=config.default_template, disabled=True)
-if config.modo_guardado == "Mediante ubicación":
-    output_folder = st.text_input("Ubicación de salida:", value=getattr(config, "output_folder", ""))
-    #Quitamos los espacios en blanco al principio y al final y las comillas
-    output_folder = output_folder.strip().replace('"', '').replace("'", "")
-    
 
 if not excel_file:
     st.warning("Para continuar por favor, sube la Plantilla POST.")
@@ -252,8 +263,13 @@ with st.container():
             today = st.date_input("Today", value="today", format = "DD/MM/YYYY", help="Fecha de hoy")
         else:
             today = st.text_input("Today", value=data["today"], help="Fecha de hoy", placeholder = "<<today>>")
-        descripcion = st.text_area("Descripción", value=data["descripcion"], help = "Ignorar si la plantilla ya contiene la descripción",  placeholder = "<<descripcion>>")
-        alcance = st.text_area("Alcance", value=data["alcance"], help = "Ignorar si la plantilla ya contiene el alcance", placeholder = "<<alcance>>")
+        # Descripción y Alcance
+        if config.enable_description:
+            descripcion = st.text_area("Descripción", value=data["descripcion"], help = "Ignorar si la plantilla ya contiene la descripción",  placeholder = "<<descripcion>>")
+        if config.enable_alcance:
+            alcance = st.text_area("Alcance", value=data["alcance"], help = "Ignorar si la plantilla ya contiene el alcance", placeholder = "<<alcance>>")
+        #--------------#
+
         submitted_dg = st.form_submit_button("Guardar Datos Generales")
     if submitted_dg:
         st.success("Datos Generales guardados.")
@@ -406,8 +422,8 @@ with st.container():
         
         # Cargar la plantilla Word
         if template_file is None:
-            st.info(f"No se cargó plantilla; se usará la plantilla por defecto:\n{config.default_template}")
-            doc = Document(config.default_template)
+            st.info(f"No se cargó plantilla; se usará la plantilla por defecto:\n {config.default_template}")
+            doc = Document(os.path.join("plantillas", config.default_template))
         else:
             template_file.seek(0)
             doc = Document(template_file)
@@ -514,123 +530,21 @@ with st.container():
         if len(config.selected_docs) == 1 or len(config.selected_docs) == 0:
             if "Word" in config.selected_docs or len(config.selected_docs) == 0:
                 if len(config.selected_docs) == 0:
-                    st.warning("No se ha seleccionado un documento de descarga específico. Por defedcto se generará un documento Word.")
-                # Genera únicamente documento Word
-                if config.modo_guardado == "Mediante ubicación":
-                    if not output_folder:
-                        st.error("No se ha especificado una ubicación de salida.")
-                        output_folder = os.path.dirname(excel_file.name)
-                        word_io = BytesIO()
-                        doc.save(word_io)
-                        word_io.seek(0)
-                        progress_bar.progress(100)
-                        st.download_button(
-                            "Descargar documento Word",
-                            data=word_io,
-                            file_name=doc_filename,
-                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                            key="download_word_single"
-                        )
-                    else:
-                        output_path = os.path.join(output_folder, doc_filename)
-                        doc.save(output_path)
-                        st.success(f"Documento Word guardado en: {output_path}")
-                        progress_bar.progress(100)
-                elif config.modo_guardado == "Mediante descarga":
-                    word_io = BytesIO()
-                    doc.save(word_io)
-                    word_io.seek(0)
-                    progress_bar.progress(100)
-                    st.download_button(
-                        "Descargar documento Word",
-                        data=word_io,
-                        file_name=doc_filename,
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        key="download_word_single"
-                    )
-            elif "PDF" in config.selected_docs:
-                # Genera únicamente documento PDF (conversión desde el Word generado)
-                if config.modo_guardado == "Mediante ubicación":
-                    if not output_folder:
-                        st.error("No se ha especificado una ubicación de salida.")
-                        output_folder = os.path.dirname(excel_file.name)
-                    with tempfile.TemporaryDirectory() as temp_folder:
-                        temp_doc_path = os.path.join(temp_folder, doc_filename)
-                        doc.save(temp_doc_path)
-                        try:
-                            from docx2pdf import convert
-                            temp_pdf_path = os.path.join(temp_folder, pdf_filename)
-                            convert(temp_doc_path, temp_pdf_path)
-                            with open(temp_pdf_path, "rb") as f_pdf:
-                                pdf_bytes = f_pdf.read()
-                            output_path = os.path.join(output_folder, pdf_filename)
-                            with open(output_path, "wb") as f_out:
-                                f_out.write(pdf_bytes)
-                            st.success(f"Documento PDF guardado en: {output_path}")
-                            progress_bar.progress(100)
-                        except Exception as e:
-                            st.error(f"Error al convertir a PDF: {e}")
-                elif config.modo_guardado == "Mediante descarga":
-                    with tempfile.TemporaryDirectory() as temp_folder:
-                        temp_doc_path = os.path.join(temp_folder, doc_filename)
-                        doc.save(temp_doc_path)
-                        try:
-                            from docx2pdf import convert
-                            temp_pdf_path = os.path.join(temp_folder, pdf_filename)
-                            convert(temp_doc_path, temp_pdf_path)
-                            with open(temp_pdf_path, "rb") as f_pdf:
-                                pdf_bytes = f_pdf.read()
-                            pdf_io = BytesIO(pdf_bytes)
-                            pdf_io.seek(0)
-                            progress_bar.progress(100)
-                            st.download_button(
-                                "Descargar documento PDF",
-                                data=pdf_io,
-                                file_name=pdf_filename,
-                                mime="application/pdf",
-                                key="download_pdf_single"
-                            )
-                        except Exception as e:
-                            st.error(f"Error al convertir a PDF: {e}")
-            else:
-                st.error("Documento seleccionado no soportado.")
-        elif len(config.selected_docs) >= 2:
-            # Genera ambos documentos y los empaqueta en un ZIP
-            if config.modo_guardado == "Mediante ubicación":
-                if not output_folder:
-                    st.error("No se ha especificado una ubicación de salida.")
-                    output_folder = os.path.dirname(excel_file.name)
-                    word_io = BytesIO()
-                    doc.save(word_io)
-                    word_io.seek(0)
-                    progress_bar.progress(65)
-                    try:
-                        from docx2pdf import convert
-                        with tempfile.TemporaryDirectory() as temp_folder:
-                            temp_doc_path = os.path.join(temp_folder, doc_filename)
-                            doc.save(temp_doc_path)
-                            temp_pdf_path = os.path.join(temp_folder, pdf_filename)
-                            convert(temp_doc_path, temp_pdf_path)
-                        st.success(f"Documento PDF generado junto al documento Word en: {output_folder}")
-                        progress_bar.progress(100)
-                    except Exception as e:
-                        st.error(f"Error al convertir a PDF: {e}")
-                else:
-                    output_path = os.path.join(output_folder, doc_filename)
-                    doc.save(output_path)
-                    st.success(f"Documento Word guardado en: {output_path}")
-                    progress_bar.progress(65)
-                    try:
-                        from docx2pdf import convert
-                        convert(output_path)
-                        st.success(f"Documento PDF guardado en: {output_folder}")
-                    except Exception as e:
-                        st.error(f"Error al convertir a PDF: {e}")
-                    progress_bar.progress(100)
-            elif config.modo_guardado == "Mediante descarga":
+                    st.warning("No se ha seleccionado un documento de descarga específico. Por defecto se generará un documento Word.")
+                # Genera únicamente documento Word (descarga)
                 word_io = BytesIO()
                 doc.save(word_io)
                 word_io.seek(0)
+                progress_bar.progress(100)
+                st.download_button(
+                    "Descargar documento Word",
+                    data=word_io,
+                    file_name=doc_filename,
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    key="download_word_single"
+                )
+            elif "PDF" in config.selected_docs:
+                # Genera únicamente documento PDF (conversión desde el Word generado) (descarga)
                 with tempfile.TemporaryDirectory() as temp_folder:
                     temp_doc_path = os.path.join(temp_folder, doc_filename)
                     doc.save(temp_doc_path)
@@ -638,27 +552,53 @@ with st.container():
                         from docx2pdf import convert
                         temp_pdf_path = os.path.join(temp_folder, pdf_filename)
                         convert(temp_doc_path, temp_pdf_path)
-                        with open(temp_pdf_path, "rb") as pdf_file:
-                            pdf_bytes = pdf_file.read()         
+                        with open(temp_pdf_path, "rb") as f_pdf:
+                            pdf_bytes = f_pdf.read()
                         pdf_io = BytesIO(pdf_bytes)
                         pdf_io.seek(0)
                         progress_bar.progress(100)
+                        st.download_button(
+                            "Descargar documento PDF",
+                            data=pdf_io,
+                            file_name=pdf_filename,
+                            mime="application/pdf",
+                            key="download_pdf_single"
+                        )
                     except Exception as e:
                         st.error(f"Error al convertir a PDF: {e}")
-                        pdf_io = None
+        elif len(config.selected_docs) >= 2:
+            # Genera ambos documentos y los empaqueta en un ZIP (descarga)
+            word_io = BytesIO()
+            doc.save(word_io)
+            word_io.seek(0)
+            with tempfile.TemporaryDirectory() as temp_folder:
+                temp_doc_path = os.path.join(temp_folder, doc_filename)
+                doc.save(temp_doc_path)
+                try:
+                    from docx2pdf import convert
+                    temp_pdf_path = os.path.join(temp_folder, pdf_filename)
+                    convert(temp_doc_path, temp_pdf_path)
+                    with open(temp_pdf_path, "rb") as pdf_file:
+                        pdf_bytes = pdf_file.read()
+                    pdf_io = BytesIO(pdf_bytes)
+                    pdf_io.seek(0)
+                    progress_bar.progress(100)
+                except Exception as e:
+                    st.error(f"Error al convertir a PDF: {e}")
+                    pdf_io = None
 
-                excel_file.seek(0)
-                excel_bytes = excel_file.read()
-                zip_io = BytesIO()
-                with zipfile.ZipFile(zip_io, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
-                    zip_file.writestr(doc_filename, word_io.getvalue())
-                    if pdf_io is not None:
-                        zip_file.writestr(pdf_filename, pdf_io.getvalue())
-                    zip_file.writestr(excel_file.name, excel_bytes)
-                zip_io.seek(0)
-                st.download_button(
-                    "Descargar ZIP con todos los archivos",
-                    data=zip_io,
-                    file_name=f"{updated['oferta_referencia']}.zip",
-                    mime="application/zip"
-                )
+            excel_file.seek(0)
+            excel_bytes = excel_file.read()
+            zip_io = BytesIO()
+            with zipfile.ZipFile(zip_io, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+                zip_file.writestr(doc_filename, word_io.getvalue())
+                if pdf_io is not None:
+                    zip_file.writestr(pdf_filename, pdf_io.getvalue())
+                zip_file.writestr(excel_file.name, excel_bytes)
+            zip_io.seek(0)
+            st.download_button(
+                "Descargar ZIP con todos los archivos",
+                data=zip_io,
+                file_name=f"{updated['oferta_referencia']}.zip",
+                mime="application/zip"
+            )

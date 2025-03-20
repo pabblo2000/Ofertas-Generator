@@ -9,20 +9,21 @@ if (-not (Test-Path ".venv")) {
 # Si config.py no existe, solicitar datos y crearlo
 if (-not (Test-Path "config.py")) {
     Write-Host "config.py no encontrado. Por favor, ingrese los siguientes datos para la configuracion."
-    $modo_guardado = "Mediante descarga"  
     $nombre = Read-Host "Ingrese su nombre"
     $configContent = @"
     
 correo_proveedor = ""
-modo_guardado = "$modo_guardado"
 default_template = r".\plantilla.docx"
 output_folder = r""
 nombre = "$nombre"
 selected_docs = ["Word", "PDF"]
 enable_advanced_date_fields = False
 enable_custom_fields = False
+enable_description = True
+enable_alcance = True
 
 "@
+
     Set-Content -Path "config.py" -Value $configContent -Encoding UTF8
     Write-Host "Archivo config.py creado con exito."
     Write-Host @"
@@ -36,7 +37,7 @@ enable_custom_fields = False
         __/ | |            __/ |                                            
        |___/|_|           |___/                                             
 
-    "@
+"@
 
 
 }
