@@ -16,10 +16,10 @@ if ($installedVersion -ne $desiredVersion) {
     $localInstallerPath = Join-Path -Path (Get-Location) -ChildPath "python-$desiredVersion-amd64.exe"
     
     if (Test-Path $localInstallerPath) {
-        Write-Host "Instalador local encontrado. Ejecutando $localInstallerPath..."
+        Write-Host "Instalador local encontrado. Ejecutando $localInstallerPath..., puede tomar unos minutos."
         Start-Process -FilePath $localInstallerPath -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -Wait
     } else {
-        Write-Host "Instalador local no encontrado. Procediendo a descargar..."
+        Write-Host "Instalador local no encontrado. Procediendo a descargar..., puede tomar unos minutos."
         $pythonInstallerUrl = "https://www.python.org/ftp/python/$desiredVersion/python-$desiredVersion-amd64.exe"
         $installerPath = "$env:TEMP\python-$desiredVersion-amd64.exe"
         Invoke-WebRequest -Uri $pythonInstallerUrl -OutFile $installerPath
@@ -68,8 +68,16 @@ if (-not (Test-Path "requirements.txt")) {
     exit 1
 }
 
-Write-Host "Instalando dependencias desde requirements.txt..."
-python -m pip install -r requirements.txt
+Write-Host "Instalando dependencias desde requirements.txt..., puede tomar unos minutos."
+$requirements = Get-Content "requirements.txt" | Where-Object { $_.Trim() -and -not ($_.Trim().StartsWith("#")) }
+$total = $requirements.Count
+$i = 0
+
+foreach ($package in $requirements) {
+    $i++
+    Write-Progress -Activity "Instalando dependencias" -Status "Instalando $package ($i de $total)" -PercentComplete (($i / $total) * 100)
+    python -m pip install $package
+}
 
 
 Write-Host "*******************************************************"

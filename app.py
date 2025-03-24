@@ -8,37 +8,40 @@ from docx import Document
 import tempfile
 from datetime import datetime
 import zipfile
-try:
-    import config  # Configuración: correo_proveedor, modo_guardado, default_template, etc.
-except:
-    st.error("No se pudo cargar el archivo de configuración, si acabas de instalar la app recarga la página.")
-    # Creamos un archivo de configuración por defecto
-    with open("config.py", "w", encoding="utf-8") as f:
-        f.write('correo_proveedor = ""\n')
-        f.write('default_template = r".default.docx"\n')
-        f.write('nombre = ""\n')
-        f.write('selected_docs = ["Word", "PDF"]\n') # En un futuro se podrá seleccionar Excel
-        f.write('enable_advanced_date_fields = True\n')
-        f.write('enable_custom_fields = False\n')
-        # Agregamos campos para quitar el apartado de descripción y alcance
-        f.write('enable_description = True\n')
-        f.write('enable_alcance = True\n')
-    st.error("Se ha creado un archivo de configuración por defecto. Por favor, reinicia la app.")
+if not os.path.exists("config.py"):
+    exec(open("config_page.py", encoding="utf-8").read())
+    st.stop()
 
-# Verificamos que config tiene todos los campos necesarios
-if not hasattr(config, "correo_proveedor") and not hasattr(config, "default_template") and not hasattr(config, "nombre") \
-    and not hasattr(config, "selected_docs") and not hasattr(config, "enable_advanced_date_fields") and not hasattr(config, "enable_custom_fields"):
-    st.error("El archivo de configuración no tiene todos los campos necesarios, por favor, reinicia la app.")
-    with open("config.py", "w", encoding="utf-8") as f:
-        f.write('correo_proveedor = ""\n')
-        f.write('default_template = r".default.docx"\n')
-        f.write('nombre = ""\n')
-        f.write('selected_docs = ["Word", "PDF"]\n') # En un futuro se podrá seleccionar Excel
-        f.write('enable_advanced_date_fields = True\n')
-        f.write('enable_custom_fields = False\n')
-        # Agregamos campos para quitar el apartado de descripción y alcance
-        f.write('enable_description = True\n')
-        f.write('enable_alcance = True\n')
+try:
+    import config
+except ImportError:
+    st.error("No se ha encontrado el archivo de configuración 'config.py'.")
+    exec(open("config_page.py", encoding="utf-8").read())
+    st.stop()
+
+# Verificamos que config tiene todos los campos necesarios y se agregan los que falten
+default_fields = {
+    "correo_proveedor": '""',
+    "default_template": 'r".default.docx"',
+    "nombre": '""',
+    "selected_docs": '["Word", "PDF"]',
+    "enable_advanced_date_fields": 'True',
+    "enable_custom_fields": 'False',
+    "enable_description": 'True',
+    "enable_alcance": 'True'
+}
+
+missing_fields = {}
+for field, default_value in default_fields.items():
+    if not hasattr(config, field):
+        missing_fields[field] = default_value
+
+if missing_fields:
+    st.error(f"El archivo de configuración no tiene los siguientes campos: {', '.join(missing_fields.keys())}. Se agregan con valores por defecto.")
+    with open("config.py", "a", encoding="utf-8") as f:
+        for field, default_value in missing_fields.items():
+            f.write(f'{field} = {default_value}\n')
+    st.stop()
        
 
 st.set_page_config(
@@ -112,7 +115,7 @@ with st.sidebar:
             st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
     
     st.markdown("---")
-    st.markdown("**Version:** 1.4.5")
+    st.markdown("**Version:** 1.5.0")
 
 # --- Carga de archivos ---
 col1, col2= st.columns(2)
@@ -135,9 +138,9 @@ with col2:
     template_file = st.file_uploader("Selecciona la plantilla Word (.docx)", type=["docx"])
     # Boton para descargar plantilla vacia
 
-    default_template_path = os.path.join("plantillas", config.default_template) if os.path.exists(os.path.join("plantillas", config.default_template)) else config.default_template
-    if os.path.exists(default_template_path):
-        with open(default_template_path, "rb") as f:
+    word_template_path = os.path.join("plantillas", config.default_template) if os.path.exists(os.path.join("plantillas", config.default_template)) else config.default_template
+    if os.path.exists(word_template_path):
+        with open(word_template_path, "rb") as f:
             st.download_button(
                 label="Descargar plantilla Word vacía",
                 data=f,
