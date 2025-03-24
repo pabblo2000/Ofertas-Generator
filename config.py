@@ -1,0 +1,9 @@
+correo_proveedor = "eliaslashero@gmail.com"
+default_template = r"default.docx"
+nombre = "Pablo Alvaro"
+selected_docs = ['Word', 'PDF']
+enable_advanced_date_fields = True
+enable_custom_fields = True
+enable_description = True
+enable_alcance = False
+date_format = "d%/b%/y%"

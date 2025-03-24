@@ -96,11 +96,11 @@ with st.sidebar:
         enable_advanced_date_fields = st.toggle("Habilitar campos de fecha avanzados",
                                                 value=getattr(config, "enable_advanced_date_fields", True), help="Permite seleccionar fechas con calendario")      
         enable_description = st.toggle("Habilitar descripción",
-                                      value=getattr(config, "enable_description", True), help="Permite añadir descripción en el documento")
+                  value=getattr(config, "enable_description", True), help="Permite añadir descripción en el documento")
         enable_alcance = st.toggle("Habilitar alcance",
-                                  value=getattr(config, "enable_alcance", True), help="Permite añadir alcance en el documento")
+                  value=getattr(config, "enable_alcance", True), help="Permite añadir alcance en el documento")
         enable_custom_fields = st.toggle("Habilitar campos personalizados", 
-                                        value=getattr(config, "enable_custom_fields", False), help="Permite añadir campos personalizados en el documento")
+                value=getattr(config, "enable_custom_fields", False), help="Permite añadir campos personalizados en el documento")
         
         if st.button("Guardar Configuración"):
             with open("config.py", "w", encoding="utf-8") as f:
@@ -112,10 +112,10 @@ with st.sidebar:
                 f.write(f'enable_custom_fields = {enable_custom_fields}\n')
                 f.write(f'enable_description = {enable_description}\n')
                 f.write(f'enable_alcance = {enable_alcance}\n')
-            st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
-    
-    st.markdown("---")
-    st.markdown("**Version:** 1.5.0")
+                st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
+        
+        st.markdown("---")
+        st.markdown("**Version:** 1.5.2")
 
 # --- Carga de archivos ---
 col1, col2= st.columns(2)
@@ -277,8 +277,20 @@ with st.container():
         #--------------#
 
         submitted_dg = st.form_submit_button("Guardar Datos Generales")
-    if submitted_dg:
-        st.success("Datos Generales guardados.")
+
+        # Ponemos las fechas en formato dd/mm/yyyy
+        try:
+            fecha_inicio = fecha_inicio.strftime('%d/%m/%Y')
+        except:
+            pass
+        try:
+            fecha_fin = fecha_fin.strftime('%d/%m/%Y')
+        except:
+            pass
+        try:
+            today = today.strftime('%d/%m/%Y')
+        except:
+            pass
 
 # =============================================================================
 # SECCIÓN 2: POSTS Y TOTALES
