@@ -113,7 +113,6 @@ with st.sidebar:
     
     st.markdown("---")
     st.markdown("**Version:** 1.4.5")
-    st.markdown("**Autor:** Pablo Álvaro Hidalgo")
 
 # --- Carga de archivos ---
 col1, col2= st.columns(2)
