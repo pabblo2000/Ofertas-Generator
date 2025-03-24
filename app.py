@@ -114,8 +114,8 @@ with st.sidebar:
                 f.write(f'enable_alcance = {enable_alcance}\n')
                 st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
         
-        st.markdown("---")
-        st.markdown("**Version:** 1.5.2")
+    st.markdown("---")
+    st.markdown("**Version:** 1.5.2")
 
 # --- Carga de archivos ---
 col1, col2= st.columns(2)
