@@ -21,7 +21,7 @@ enable_alcance = True
     try:
         with open("config.py", "w", encoding="utf-8") as file:
             file.write(config_contents)
-        st.success("Muchas gracias por su información. Redirigiendo a la aplicación...")
+        st.success("Muchas gracias. Redirigiendo a la aplicación...")
         # Redirigir a la main page
         time.sleep(2)  # Dar tiempo para mostrar el mensaje de éxito
 

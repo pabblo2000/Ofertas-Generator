@@ -1,5 +1,5 @@
 Set fso = CreateObject("Scripting.FileSystemObject")
-If fso.FileExists("config.py") Then
+If fso.FolderExists(".venv") Then
     windowStyle = 0
 Else
     windowStyle = 1
