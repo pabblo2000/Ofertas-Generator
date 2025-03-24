@@ -13,7 +13,7 @@ if (-not (Test-Path "config.py")) {
     $configContent = @"
     
 correo_proveedor = ""
-default_template = r".\plantilla.docx"
+default_template = r".\plantillas\default.docx"
 output_folder = r""
 nombre = "$nombre"
 selected_docs = ["Word", "PDF"]
@@ -44,10 +44,7 @@ enable_alcance = True
 
 
 Write-Host "Activando el entorno virtual..."
-& .\.venv\Scripts\Activate.ps1
-
-Write-Host "Ejecutando la aplicacion Streamlit..."
-python -m streamlit run app.py
+. .\.venv\Scripts\Activate.ps1
 
 Write-Host @"
 __     __           __  __                _____ _                  _______ _     _       _______    _     
@@ -59,3 +56,7 @@ __     __           __  __                _____ _                  _______ _    
                                   __/ |                                                                   
                                  |___/                                                                                                                                                                                                                                                                                                                                                             
 "@
+
+Write-Host "Ejecutando la aplicacion Streamlit..."
+python -m streamlit run app.py
+

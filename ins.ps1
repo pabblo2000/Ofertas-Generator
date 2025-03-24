@@ -1,6 +1,6 @@
 $desiredVersion = "3.11.9"
 
-# Intentar obtener la versión de Python 3.11 usando el lanzador
+# Intentar obtener la version de Python 3.11 usando el lanzador
 try {
     $versionOutput = & py -3.11 --version 2>&1
     $installedVersion = ($versionOutput -replace 'Python ', '').Trim()
@@ -9,17 +9,25 @@ try {
 }
 
 if ($installedVersion -ne $desiredVersion) {
-    Write-Host "La versión instalada de Python ($installedVersion) no coincide con la requerida ($desiredVersion) o no se encontró."
-    Write-Host "Procediendo a descargar e instalar Python $desiredVersion..."
+    Write-Host "La version instalada de Python ($installedVersion) no coincide con la requerida ($desiredVersion) o no se encontro."
+    Write-Host "Procediendo a instalar Python $desiredVersion..."
     
-    $pythonInstallerUrl = "https://www.python.org/ftp/python/$desiredVersion/python-$desiredVersion-amd64.exe"
-    $installerPath = "$env:TEMP\python-$desiredVersion-amd64.exe"
-    Invoke-WebRequest -Uri $pythonInstallerUrl -OutFile $installerPath
-    Write-Host "Instalando Python $desiredVersion..."
-    Start-Process -FilePath $installerPath -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -Wait
-    Remove-Item $installerPath
+    # Definir la ruta del instalador local (se asume que esta en la raiz del proyecto)
+    $localInstallerPath = Join-Path -Path (Get-Location) -ChildPath "python-$desiredVersion-amd64.exe"
     
-    # Revalidar la instalación usando el lanzador
+    if (Test-Path $localInstallerPath) {
+        Write-Host "Instalador local encontrado. Ejecutando $localInstallerPath..."
+        Start-Process -FilePath $localInstallerPath -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -Wait
+    } else {
+        Write-Host "Instalador local no encontrado. Procediendo a descargar..."
+        $pythonInstallerUrl = "https://www.python.org/ftp/python/$desiredVersion/python-$desiredVersion-amd64.exe"
+        $installerPath = "$env:TEMP\python-$desiredVersion-amd64.exe"
+        Invoke-WebRequest -Uri $pythonInstallerUrl -OutFile $installerPath
+        Start-Process -FilePath $installerPath -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -Wait
+        Remove-Item $installerPath
+    }
+    
+    # Revalidar la instalacion usando el lanzador
     try {
         $versionOutput = & py -3.11 --version 2>&1
         $installedVersion = ($versionOutput -replace 'Python ', '').Trim()
@@ -34,7 +42,7 @@ if ($installedVersion -ne $desiredVersion) {
         Write-Host "Python $desiredVersion instalado correctamente."
     }
 } else {
-    Write-Host "Python $desiredVersion ya está instalado."
+    Write-Host "Python $desiredVersion ya esta instalado."
 }
 
 # Verificar si existe el entorno virtual (.venv) y crearlo si no existe, usando Python 3.11
@@ -46,7 +54,7 @@ if (-not (Test-Path ".venv")) {
         exit 1
     }
 } else {
-    Write-Host ".venv ya existe. Saltando creación."
+    Write-Host ".venv ya existe. Saltando creacion."
 }
 
 Write-Host "Activando el entorno virtual..."
@@ -62,6 +70,7 @@ if (-not (Test-Path "requirements.txt")) {
 
 Write-Host "Instalando dependencias desde requirements.txt..."
 python -m pip install -r requirements.txt
+
 
 Write-Host "*******************************************************"
 Write-Host "**** APLICACION INSTALADA ****"
