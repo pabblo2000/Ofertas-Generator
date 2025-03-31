@@ -1,4 +1,3 @@
-*.pdf
 *.docx
 *.jpg
 *.png
@@ -14,3 +13,4 @@ build/
 share/
 include/
 plantillas/
+*.pptx

@@ -10,7 +10,8 @@
 - **Interfaz Intuitiva y Personalizable**: Permite editar datos generales, perfiles (posts), totales y agregar campos personalizados según se requiera.
 - **Generación Dual de Documentos**: Produce documentos en **Word** y los convierte a **PDF**, con opción a empaquetar ambos formatos junto al Excel original en un archivo ZIP.
 - **Configuración Flexible**: Ajusta parámetros como el correo del proveedor, modo de guardado, rutas de plantillas y ubicación de salida, entre otros.
-- **Instalación y Ejecución Simplificadas**: Con tan solo ejecutar el archivo **run_app.vbs**, la aplicación verifica automáticamente la existencia de `config.py` y del entorno virtual `.venv`, iniciándose sin necesidad de pasos adicionales.
+- **Instalación y Ejecución Simplificadas**: Con tan solo ejecutar el archivo **run_app.vbs**, la aplicación verifica automáticamente la existencia de `config.py` y del entorno virtual `.venv`, iniciándose sin pasos adicionales.
+- **Actualizaciones y Mantenimiento**: Facilita futuras actualizaciones mediante la centralización de la configuración y la modularidad de sus scripts.
 
 ## Estructura del Proyecto
 
@@ -36,11 +37,11 @@
 2. **Proceso de Instalación y Ejecución**:
    - Extrae el contenido del ZIP en una carpeta en el equipo destino.
    - **Ejecución Simplificada**:  
-     Ya no es necesario utilizar archivos Batch (.bat). Simplemente haz doble clic en el archivo **run_app.vbs**. Este script se encargará de:
+     Haz doble clic en el archivo **run_app.vbs**. Este script se encargará de:
      - Verificar la existencia de **config.py** y del entorno virtual **.venv**.
-     - Ejecutar el proceso de instalación (si falta alguno de estos elementos) creando el entorno virtual e inicializando **config.py** según corresponda.
+     - Ejecutar el proceso de instalación (creando el entorno virtual e inicializando **config.py** si es necesario).
      - Iniciar la aplicación en **Streamlit** de forma automática y silenciosa.
-   - Durante el proceso, se mostrará un mensaje de confirmación similar a:
+   - Durante el proceso se mostrará un mensaje de confirmación similar a:
 
      ```bash
      **** APLICACION INSTALADA ****
@@ -54,11 +55,13 @@
 
 2. **Edición y Personalización de Datos**:
    - **Datos Generales**:  
-     Edita campos como la oferta de referencia, nombre del proyecto (con la opción de incluir el valor SDA extraído de la celda B8), fechas, correos y descripciones.
+     Edita campos como la oferta de referencia, nombre del proyecto (incluyendo el valor SDA extraído de la celda B8), fechas, correos y descripciones.
    - **Posts y Totales**:  
-     Permite agregar y modificar hasta **10 perfiles (posts)**, cada uno con sus horas y costos, además de actualizar los totales correspondientes.
+     Permite agregar y modificar hasta **10 perfiles (posts)**, cada uno con sus horas y costos, actualizando los totales correspondientes.
    - **Campos Personalizados** (opcional):  
      Si está habilitado, añade campos de texto corto o párrafos para personalizaciones adicionales.
+   - **Revisión y Validación**:  
+     Verifica que toda la información ingresada sea correcta antes de generar el documento final.
 
 3. **Generación de Documentos**:
    - Al pulsar el botón **"Generar Documento"**, la aplicación:
@@ -71,9 +74,10 @@
 ## Requisitos del Sistema
 
 - **Sistema Operativo**: Windows (compatible con VBScript y PowerShell).
-- **Conectividad**: Se requiere conexión a Internet para la instalación inicial de dependencias.
+- **Conectividad**: Conexión a Internet necesaria para la instalación inicial de dependencias.
 - **Python**: Versión 3.11.9 o compatible, instalada globalmente para facilitar la creación del entorno virtual.
-- **Dependencias**: Se instalarán automáticamente mediante **requirements.txt** (incluyendo librerías como Streamlit, pandas, python-docx, docx2pdf, entre otras).
+- **Dependencias**: Instaladas automáticamente mediante **requirements.txt** (incluyendo librerías como Streamlit, pandas, python-docx, docx2pdf, entre otras).
+- **Recursos del Sistema**: Se recomienda contar con al menos 200 MB de espacio libre y 2 GB de RAM para un funcionamiento óptimo.
 
 ## Ejecución de la Aplicación
 
@@ -81,13 +85,22 @@ Para iniciar la aplicación, simplemente haz doble clic en **run_app.vbs**. Este
 
 - Verificar la existencia de **config.py** y del entorno virtual **.venv**.
 - Ejecutar la aplicación en tu navegador a través de **Streamlit**, sin necesidad de mostrar la terminal.
+- Abrir automáticamente la URL de la aplicación en el navegador predeterminado.
 
 ## Notas y Recomendaciones
 
 - Asegúrate de que el archivo Excel incluya la hoja **"Plantilla POST"** con el formato correcto.
 - Verifica que **config.py** contenga todas las variables necesarias para el correcto funcionamiento de la aplicación.
 - En caso de problemas con la conversión a PDF, revisa las dependencias instaladas y la versión de Python.
-- La aplicación es altamente configurable, lo que permite adaptarla a diferentes flujos de trabajo y requerimientos en la generación de ofertas comerciales.
+- Mantén actualizadas las dependencias y el entorno virtual, actualizando el archivo **requirements.txt** cuando sea necesario.
+- Realiza pruebas periódicas para garantizar la integridad de los datos y el correcto funcionamiento de la aplicación.
+
+## Desarrollo y Contribución
+
+- **Personalización del Software**:  
+  Los usuarios pueden modificar y ampliar la funcionalidad del software editando el archivo **config.py** y los scripts asociados.
+- **Contribuciones**:  
+  Se aceptan sugerencias y colaboraciones para mejorar la aplicación. Para contribuir o reportar incidencias, contacta a <palvaroh@minsait.com> o <palvaroh2000@gmail.com>.
 
 ## Licencia
 
@@ -95,8 +108,4 @@ Este proyecto se distribuye bajo la licencia [especificar licencia aquí]. Consu
 
 ## Contacto y Soporte
 
-Para consultas, sugerencias o reportar incidencias, puedes contactar a <palvaroh@minsait.com>.
-
----
-
-**Generador de Ofertas** es una solución integral que optimiza y profesionaliza el proceso de creación y gestión de ofertas comerciales.
+Para consultas, sugerencias o reportar incidencias, puedes contactar a <palvaroh@minsait.com> o <palvaroh2000@gmail.com>.
