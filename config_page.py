@@ -17,6 +17,7 @@ enable_advanced_date_fields = True
 enable_custom_fields = False
 enable_description = True
 enable_alcance = True
+enable_different_company = False
 '''
     try:
         with open("config.py", "w", encoding="utf-8") as file:

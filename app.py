@@ -27,8 +27,9 @@ default_fields = {
     "selected_docs": '["Word", "PDF"]',
     "enable_advanced_date_fields": 'True',
     "enable_custom_fields": 'False',
+    "enable_different_company": 'True',
     "enable_description": 'True',
-    "enable_alcance": 'True'
+    "enable_alcance": 'True',
 }
 
 missing_fields = {}
@@ -92,15 +93,24 @@ with st.sidebar:
             index=0,
             help="Reemplaza la plantilla por defecto, recomendado solo si se ha modificado la plantilla original"
         )
+        if st.button("📁 Abrir carpeta de plantillas", key="open_default_template_folder"):
+            try:
+                os.startfile(plantilla_dir) 
+            except Exception as e:
+                st.error(f"Error al abrir la carpeta de plantillas: {e}")
+
+
         selected_docs = st.multiselect("Documentos a generar", options=["Word", "PDF"], default=config.selected_docs, help="Selecciona los documentos a generar")
         enable_advanced_date_fields = st.toggle("Habilitar campos de fecha avanzados",
                                                 value=getattr(config, "enable_advanced_date_fields", True), help="Permite seleccionar fechas con calendario")      
+        enable_different_company = st.toggle("Habilitar diferentes empresas",
+                value=getattr(config, "enable_different_company", True), help="Permite seleccionar diferentes empresas para el cliente y proveedor")
+        enable_custom_fields = st.toggle("Habilitar campos personalizados", 
+                value=getattr(config, "enable_custom_fields", False), help="Permite añadir campos personalizados en el documento")
         enable_description = st.toggle("Habilitar descripción",
                   value=getattr(config, "enable_description", True), help="Permite añadir descripción en el documento")
         enable_alcance = st.toggle("Habilitar alcance",
                   value=getattr(config, "enable_alcance", True), help="Permite añadir alcance en el documento")
-        enable_custom_fields = st.toggle("Habilitar campos personalizados", 
-                value=getattr(config, "enable_custom_fields", False), help="Permite añadir campos personalizados en el documento")
         
         if st.button("Guardar Configuración"):
             with open("config.py", "w", encoding="utf-8") as f:
@@ -109,13 +119,14 @@ with st.sidebar:
                 f.write(f'nombre = "{config.nombre}"\n')
                 f.write(f'selected_docs = {selected_docs}\n')
                 f.write(f'enable_advanced_date_fields = {enable_advanced_date_fields}\n')
+                f.write(f'enable_different_company = {enable_different_company}\n')
                 f.write(f'enable_custom_fields = {enable_custom_fields}\n')
                 f.write(f'enable_description = {enable_description}\n')
                 f.write(f'enable_alcance = {enable_alcance}\n')
                 st.success("Configuración guardada. Reinicia la app para aplicar cambios.")
         
     st.markdown("---")
-    st.markdown("**Version:** 1.5.2")
+    st.markdown("**Version:** 1.5.3")
 
 # --- Carga de archivos ---
 col1, col2= st.columns(2)
@@ -167,6 +178,18 @@ def extraer_datos_excel(excel_file):
     except:
         nombre_proyecto = None
     try:
+        razon_social_proveedor = df.loc[2, 1] if pd.notna(df.loc[2, 1]) else None
+    except:
+        razon_social_proveedor = None
+    try:
+        cif_proveedor = df.loc[3, 1] if pd.notna(df.loc[3, 1]) else None
+    except:
+        cif_proveedor = None
+    try:
+        gps_proveedor = df.loc[4, 1] if pd.notna(df.loc[4, 1]) else None
+    except:
+        gps_proveedor = None
+    try:
         fecha_inicio = pd.to_datetime(df.loc[3, 6], format='%d.%m.%Y').strftime('%d/%m/%Y')
     except:
         fecha_inicio = None
@@ -206,6 +229,9 @@ def extraer_datos_excel(excel_file):
     
     return {
         "oferta_referencia": oferta_referencia,
+        "razon_social_proveedor": razon_social_proveedor,
+        "cif_proveedor": cif_proveedor,
+        "gps_proveedor": gps_proveedor,
         "nombre_proyecto": nombre_proyecto,
         "fecha_inicio": fecha_inicio,
         "fecha_fin": fecha_fin,
@@ -244,6 +270,17 @@ with st.container():
         else:
             nombre_proyecto = f"{nombre_proyecto_original} ({sda_field.strip()})"
 
+        if config.enable_different_company:
+            # Hay 3 campos, Razon Social Proveedor(B3), CIF Proveedor(B4) y y Nº de GPS del Proveedor(B5)
+            razon_social_proveedor_original = st.text_input("Razón Social Proveedor", value=data["razon_social_proveedor"], help="Celda B3", placeholder = "<<razon_social_proveedor>>")
+            cif_proveedor = st.text_input("CIF Proveedor", value=data["cif_proveedor"], help="Celda B4", placeholder = "<<cif_proveedor>>")
+            gps_proveedor = st.text_input("Nº de GPS Proveedor", value=data["gps_proveedor"], help="Celda B5", placeholder = "<<gps_proveedor>>")
+            if gps_proveedor is not None:
+                razon_social_proveedor = f"{razon_social_proveedor_original} ({gps_proveedor})"
+            else:
+                razon_social_proveedor = razon_social_proveedor_original
+
+
         #----Fechas----#
         if config.enable_advanced_date_fields:
             if data["fecha_inicio"] is None:
@@ -277,6 +314,8 @@ with st.container():
         #--------------#
 
         submitted_dg = st.form_submit_button("Guardar Datos Generales")
+        if submitted_dg:
+            st.success("Datos Generales guardados.")
 
         # Ponemos las fechas en formato dd/mm/yyyy
         try:
@@ -400,6 +439,8 @@ with st.container():
     if st.button("Generar Documento", help="Genera documento(s) según la configuración seleccionada"):
         updated = {
             "oferta_referencia": oferta_referencia,
+            "razon_social_proveedor": razon_social_proveedor if config.enable_different_company else "",
+            "cif_proveedor": cif_proveedor if config.enable_different_company else "",
             "nombre_proyecto": nombre_proyecto,
             "fecha_inicio": fecha_inicio,
             "fecha_fin": fecha_fin,
@@ -417,11 +458,26 @@ with st.container():
         st.subheader("Datos Actualizados")
         df_generales = pd.DataFrame({
             "Campo": ["Oferta de Referencia", "Nombre del Proyecto", "Fecha de Inicio", "Fecha de Fin", 
-                      "Correo Cliente", "Correo Proveedor", "Today", "Descripción", "Alcance"],
+                      "Correo Cliente", "Correo Proveedor", "Today"],
             "Valor": [updated["oferta_referencia"], updated["nombre_proyecto"], updated["fecha_inicio"], 
                       updated["fecha_fin"], updated["correo_cliente"], updated["correo_proveedor"], 
-                      updated["today"], updated["descripcion"], updated["alcance"]]
+                      updated["today"]]
         })
+        if config.enable_different_company:
+            if config.enable_different_company:
+                custom_df = pd.DataFrame({
+                     "Campo": ["Razón Social Proveedor", "CIF Proveedor"],
+                     "Valor": [updated["razon_social_proveedor"], updated["cif_proveedor"]]
+                })
+                df_generales = pd.concat([custom_df, df_generales], ignore_index=True)
+                # Reordenamos(indice 2 al indice 0)
+                df_generales = pd.concat([df_generales.iloc[[2]], df_generales.iloc[:2], df_generales.iloc[3:]], ignore_index=True)
+        if config.enable_description:
+            df_generales = pd.concat([df_generales, pd.DataFrame({"Campo": ["Descripción"], "Valor": [updated["descripcion"]]})], ignore_index=True)
+        if config.enable_alcance:
+            df_generales = pd.concat([df_generales, pd.DataFrame({"Campo": ["Alcance"], "Valor": [updated["alcance"]]})], ignore_index=True)
+
+
         st.table(df_generales)
         
         if updated["posts"]:
@@ -450,6 +506,10 @@ with st.container():
         # Reemplazo de placeholders generales y totales
         placeholders = {
             "<<oferta_referencia>>": updated["oferta_referencia"],
+            "<<proveedor>>": updated["razon_social_proveedor"],
+            "<<cif>>": updated["cif_proveedor"],           
+            "<<razon_social_proveedor>>": updated["razon_social_proveedor"],
+            "<<cif_proveedor>>": updated["cif_proveedor"],
             "<<nombre_proyecto>>": updated["nombre_proyecto"],
             "<<fecha_inicio>>": updated["fecha_inicio"],
             "<<fecha_fin>>": updated["fecha_fin"],
@@ -529,16 +589,38 @@ with st.container():
         
         # Formateo extra en el documento Word
         try:
-            doc.paragraphs[1].runs[0].bold = True
-            para = doc.paragraphs[5]
-            text = para.runs[0].text
-            para.runs[0].text = ""
-            run1 = para.add_run(text[:19])
-            run1.underline = True
-            run2 = para.add_run(text[19:])
-            run2.underline = False
+            if nombre_proyecto is not None:
+                doc.paragraphs[1].runs[0].bold = True
+                para = doc.paragraphs[5]
+                text = para.runs[0].text
+                para.runs[0].text = ""
+                run1 = para.add_run(text[:19])
+                run1.underline = True
+                run2 = para.add_run(text[19:])
+                run2.underline = False
         except Exception as e:
             st.error(f"Error en formateo extra del documento: {e}")
+
+        # Formateo de Razon Social Proveedor y CIF Proveedor
+        try:
+            if config.enable_different_company:
+                # Subrayar PROVEEDOR: <<proveedor>>
+                para_proveedor = doc.paragraphs[2]
+                for run in para_proveedor.runs:
+                    run.underline = True
+
+                # Subrayar CIF: <<cif>>
+                para_cif = doc.paragraphs[3]
+                for run in para_cif.runs:
+                    run.underline = True
+        except Exception as e:
+            st.error(f"Error al subrayar: {e}")
+
+
+
+
+
+
         progress_bar.progress(60)
         
         doc_filename = f"{updated['oferta_referencia']}.docx"

@@ -1,8 +1,9 @@
 correo_proveedor = ""
+default_template = r"default_sin_proveedor.docx"
 nombre = "Pablo Álvaro Hidalgo"
-default_template = r"default.docx"
-selected_docs = ["Word", "PDF"]
+selected_docs = ['PDF']
 enable_advanced_date_fields = True
+enable_different_company = True
 enable_custom_fields = False
 enable_description = True
 enable_alcance = True
